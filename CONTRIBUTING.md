@@ -1,71 +1,72 @@
-# 🤝 Contributing to Knowledge Base
+# 🤝 贡献知识库
 
-Welcome! We appreciate your contribution to this knowledge base project.
+欢迎！我们感谢您的本知识库项目的贡献。
 
-## 📋 Guidelines
+## 📋 指南
 
-Before contributing, please read these guidelines:
+在贡献之前，请阅读以下指南：
 
-### 1. File Format
-- All content must be written in **Markdown (.md)** format
-- Use consistent heading levels (`#` for main title, `##` for sections, etc.)
+### 1. 文件格式
+所有内容必须使用 **Markdown (.md)** 格式编写。
+- 使用一致的标题层级（`#` 为主标题，`##` 为章节等）
 
-### 2. Naming Conventions
-- File names use **kebab-case**: `my-awesome-documentation.md`
-- Avoid spaces and special characters in file names
+### 2. 命名规范
+- 文件名使用 **kebab-case**：`my-awesome-documentation.md`
+- 避免在文件名中使用空格和特殊字符
 
-### 3. Content Structure
-Each new document should include:
+### 3. 内容结构
+每个新文档应包含：
 ```markdown
-# Title of the Document
+# 文档标题
 
-## Overview
-Brief description...
+## 概述
+简短描述...
 
-## Details
-Main content here...
+## 详情
+主要内容...
 
-## References
-Links to related resources...
+## 参考
+相关资源的链接...
 ```
 
 ### 4. Pull Requests
-- Create a descriptive commit message
-- Explain the purpose of changes
-- Ensure tests (if any) pass
+- 创建描述性提交消息
+- 解释更改的目的
+- 确保测试（如果有）通过
 
 ---
 
-## 🛠️ How to Contribute
+## 🛠️ 如何贡献
 
-### Fork Workflow
+### Fork 工作流程
+
 ```bash
-# 1. Fork the repository on GitHub
-# 2. Clone your fork
+# 1. 在 GitHub 上 Fork 仓库
+# 2. 克隆您的 fork
 git clone https://github.com/your-username/knowledge-front-yuying.git
 cd knowledge-front-yuying
 
-# 3. Create a new branch
+# 3. 创建一个新分支
 git checkout -b feature/my-new-doc
 
-# 4. Make changes and commit
+# 4. 进行更改并提交
 git add .
-git commit -m "Add new documentation about X"
+git commit -m "添加关于 X 的新文档"
 
-# 5. Push to your fork
+# 5. 推送到您的 fork
 git push origin feature/my-new-doc
 
-# 6. Create a pull request on GitHub
+# 6. 在 GitHub 上创建一个 pull request
 ```
 
 ---
 
-## 📜 Code of Conduct
+## 📜 行为准则
 
-Please note that this project adopts a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold it.
+请注意本项目采用 [行为准则](CODE_OF_CONDUCT.md)。通过参与，您同意遵守它。
 
 ---
 
-## Questions?
+## 疑问？
 
-Have questions about contributions? Feel free to open an issue or contact the maintainers.
+有关贡献的疑问，请随时提出问题或联系维护人员。

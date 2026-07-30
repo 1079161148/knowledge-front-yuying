@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 聊天流式输出 Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d161d; color: #e0f7fa; padding: 1rem; margin: 0; }
+    .box { background: #203a43; border-radius: 8px; padding: .8rem; margin-bottom: .5rem; min-height: 40px; white-space: pre-wrap; line-height: 1.6; }
+    .user { color: #00e5ff; } .ai { color: #7c4dff; }
+    button { margin-top: .4rem; padding: .4rem 1rem; border: none; border-radius: 6px; background: #2c5364; color: #fff; cursor: pointer; }
+    button:hover { background: #00e5ff; color: #0d161d; }
+  </style>
+</head>
+<body>
+  <h4>AI 聊天（模拟流式输出）</h4>
+  <div class="box"><span class="user">你：</span>用一句话解释虚拟 DOM</div>
+  <div class="box"><span class="ai">AI：</span><span id="out"></span><span id="caret" style="color:#00e5ff">▋</span></div>
+  <button onclick="stream()">▶ 开始流式回复</button>
+
+  <script>
+    const text = '虚拟 DOM 是用 JS 对象描述 UI 的轻量副本，状态变化后通过 Diff 计算最小更新并应用到真实 DOM，从而提升渲染性能。';
+    let timer = null;
+    async function stream() {
+      const out = document.getElementById('out');
+      const caret = document.getElementById('caret');
+      out.textContent = '';
+      clearInterval(timer);
+      caret.style.display = 'inline';
+      let i = 0;
+      await new Promise(resolve => {
+        timer = setInterval(() => {
+          out.textContent += text[i++];
+          if (i >= text.length) { clearInterval(timer); caret.style.display = 'none'; resolve(); }
+        }, 40);
+      });
+    }
+  </script>
+</body>
+</html>

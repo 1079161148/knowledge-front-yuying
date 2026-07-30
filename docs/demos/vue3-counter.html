@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vue 3 计数器 Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 1.5rem; margin: 0; }
+    h3 { color: #00e5ff; }
+    button { font-size: 1.2rem; padding: .4rem 1rem; margin: 0 .3rem; cursor: pointer; border: none; border-radius: 6px; background: #203a43; color: #fff; }
+    button:hover { background: #2c5364; }
+    span { font-size: 2rem; margin: 0 1rem; display: inline-block; min-width: 2rem; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h3>Vue 3 计数器</h3>
+    <button @click="count--">-</button>
+    <span>{{ count }}</span>
+    <button @click="count++">+</button>
+    <p>双倍：{{ double }}</p>
+  </div>
+  <script>
+    const { createApp, ref, computed } = Vue
+    createApp({
+      setup() {
+        const count = ref(0)
+        const double = computed(() => count.value * 2)
+        return { count, double }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>

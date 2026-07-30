@@ -26,7 +26,7 @@ git commit -F commit_msg.txt -m "Auto-sync: %TIMESTAMP%" 2>nul || (
 
 REM Push to main branch
 echo Uploading changes to GitHub...
-git push origin main 2>nul || (
+git push origin master 2>nul || (
     echo ❌ Push failed. Please check your network and GitHub credentials.
     del commit_msg.txt 2>nul
     pause

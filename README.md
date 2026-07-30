@@ -1,70 +1,80 @@
-# 🏗️ Knowledge Front Base
+# 🏗️ 知识前端基地
 
 ![Knowledge Base](https://via.placeholder.com/150)
 
-## 🔍 About This Project
+## 🔍 关于本项目
 
-This is a comprehensive knowledge base system designed to document technical decisions, setup processes, and architectural choices for full-stack development projects. The repository uses Markdown files for content, making it easy to edit in any text editor (including Obsidian).
+这是一个全面的知识库系统设计，用于记录技术决策、安装流程和架构选择，适用于全栈开发项目。仓库使用 Markdown 文件作为内容，便于在任何编辑器（包括 Obsidian）中编辑。
 
-## 🚀 Quick Start
+---
 
-### 1. Clone the Repository
+## 🚀 快速入门
+
+### 1. 克隆仓库
 ```bash
 git clone https://github.com/1079161148/knowledge-front-yuying.git
 cd knowledge-front-yuying
 ```
 
-### 2. Open in Your Editor
+### 2. 在编辑器中打开
 - **VS Code**: `code .`
-- **Obsidian**: Open the folder as a vault
-- **Other Markdown Editors**: Any markdown-compatible editor
+- **Obsidian**: 将该文件夹打开为 vault
+- **其他 Markdown 编辑器**：任何兼容 markdown 的编辑器
 
-### 3. Start Writing Documentation
-Create new markdown files in the `docs/` folder:
+### 3. 开始编写文档
+在 `docs/` 文件夹中创建新的 markdown 文件：
 ```
 docs/
-├── index.md           # Main landing page
-└── tutorials/         # Tutorial articles
-├── guide-1.md
-└── guide-2.md
+├── index.md           # 主入口页面
+└── tutorials/         # 教程文章
+    ├── guide-1.md
+    └── guide-2.md
 ```
 
-## 📂 Directory Structure
+---
 
-| Folder | Purpose |
-|--------|---------|
-| `setup/` | Setup documentation and installation records |
-| `tech-stack/` | Technology decisions and comparisons |
-| `docs/` | Actual knowledge content (Markdown files) |
-| `scripts/` | Automation scripts (backup, sync, etc.) |
-| `configs/` | Configuration files (.gitignore, settings) |
+## 📂 目录结构
 
-## 🛠️ Tools & Skills Integration
+| 文件夹 | 用途 |
+|--------|------|
+| `setup/` | 安装文档和安装记录 |
+| `tech-stack/` | 技术决策和比较 |
+| `docs/` | 实际知识内容（Markdown 文件） |
+| `scripts/` | 自动化脚本（备份、同步等） |
+| `configs/` | 配置文件（.gitignore、设置） |
 
-This project integrates with various Claude skills:
+---
+
+## 🛠️ 工具与技能集成
+
+本知识库可与各种 Claude 技能集成：
 
 ```markdown
-### DuckDB Integration
-Use DuckDB to query your knowledge base as if it were a database:
+### DuckDB 集成
+使用 DuckDB 将 markdown 内容当作数据库查询：
 ```sql
 SELECT title FROM knowledge_base WHERE category = 'tutorial'
 ```
 
-### Dataviz Visualization
-Visualize knowledge relationships using the dataviz skill to create charts showing connections between topics.
+### Dataviz 可视化
+使用 dataviz 技能创建图表，展示主题间的连接关系。
 
-### Workflow Automation
-Automate backup and sync operations using workflow skills with cron scheduling.
+### Workflow 自动化
+使用 workflow 技能自动执行备份和维护任务。
 ```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-*Built with ❤️ using Markdown + Git + Claude Skills*
+## 🤝 贡献指南
+
+欢迎贡献！请参见 [CONTRIBUTING.md](CONTRIBUTING.md) 中的指导方针。
+
+---
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE](LICENSE)
+
+---
+
+*使用 ❤️ + Markdown + Git + Claude Skills 构建*

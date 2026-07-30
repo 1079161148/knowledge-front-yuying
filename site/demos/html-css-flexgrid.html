@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flex vs Grid 布局 Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; color: #e0f7fa; background: #0d161d; padding: 1rem; margin: 0; }
+    .card { background: #203a43; border-radius: 8px; padding: .6rem; text-align: center; }
+    .flex { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    h4 { color: #00e5ff; margin: .4rem 0; }
+  </style>
+</head>
+<body>
+  <h4>Flex 布局（一行排列）</h4>
+  <div class="flex">
+    <div class="card">A</div><div class="card">B</div><div class="card">C</div>
+  </div>
+  <h4>Grid 布局（3 列网格）</h4>
+  <div class="grid">
+    <div class="card">1</div><div class="card">2</div><div class="card">3</div>
+    <div class="card">4</div><div class="card">5</div><div class="card">6</div>
+  </div>
+</body>
+</html>

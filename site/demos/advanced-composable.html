@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vue3 组合式逻辑复用 Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 1.2rem; margin: 0; color: #e0f7fa; }
+    h3 { color: #00e5ff; }
+    button { font-size: 1rem; padding: .35rem .9rem; margin: 0 .3rem; cursor: pointer; border: none; border-radius: 6px; background: #203a43; color: #fff; }
+    button:hover { background: #2c5364; }
+    code { background: #203a43; padding: .1rem .35rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h3>组合式 API：useCounter 逻辑复用</h3>
+    <p>A 计数器：{{ a.count }}（双倍 {{ a.double }}）</p>
+    <button @click="a.inc">A +1</button>
+    <p>B 计数器：{{ b.count }}</p>
+    <button @click="b.inc">B +1</button>
+    <p>两个计数器复用同一个 <code>useCounter</code> 组合函数</p>
+  </div>
+  <script>
+    const { createApp, ref, computed } = Vue
+    function useCounter(init = 0) {
+      const count = ref(init)
+      const double = computed(() => count.value * 2)
+      const inc = () => count.value++
+      return { count, double, inc }
+    }
+    createApp({
+      setup() {
+        const a = useCounter(0)
+        const b = useCounter(10)
+        return { a, b }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>

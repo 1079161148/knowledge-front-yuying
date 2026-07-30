@@ -1,0 +1,86 @@
+site_name: Knowledge Front Base
+site_description: 大前端全栈知识库：基础语法、框架对比、工程化、全栈实战、AI 前端与面试题
+site_author: lhl
+repo_url: https://github.com/1079161148/knowledge-front-yuying
+edit_uri: edit/master/
+docs_dir: docs
+
+theme:
+  name: material
+  language: zh
+  palette:
+    # 深色科技风（默认）
+    - scheme: slate
+      primary: cyan
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: 切换至浅色
+    # 浅色（可切换）
+    - scheme: default
+      primary: cyan
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: 切换至深色
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+extra_css:
+  - assets/extra.css
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - assets/mermaid-init.js
+
+nav:
+  - 首页: index.md
+  - 知识库大纲与路线: roadmap.md
+  - 基础 · 框架对比: basics/syntax-framework-compare.md
+  - 进阶:
+      - 组合式API/Hooks/渲染/TS/SSR: advanced/index.md
+  - 工程化:
+      - 包管理/构建/模块化/规范/Monorepo/CI: engineering/index.md
+  - 全栈框架实战:
+      - Node/NestJS/Next.js/Nuxt.js: fullstack/index.md
+  - HTML5 / CSS3:
+      - 语义化/Flex/Grid/动画/响应式/新特性: html-css/index.md
+  - AI 前端领域:
+      - 辅助编码/LLM/Vercel AI SDK/低代码+AI: ai-frontend/index.md
+  - 面试专题:
+      - Vue/React/JS/工程化/网络/手写题: interview/index.md
+  - 技术栈决策: tech-stack/technology-decisions.md
+  - 环境搭建记录: setup/setup-2026-07-30.md
+
+markdown_extensions:
+  - admonition
+  - tables
+  - fenced_code
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html

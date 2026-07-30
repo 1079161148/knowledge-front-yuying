@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>React 计数器 Demo</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 1.5rem; margin: 0; }
+    h3 { color: #00e5ff; }
+    button { font-size: 1.2rem; padding: .4rem 1rem; margin: 0 .3rem; cursor: pointer; border: none; border-radius: 6px; background: #203a43; color: #fff; }
+    button:hover { background: #2c5364; }
+    span { font-size: 2rem; margin: 0 1rem; display: inline-block; min-width: 2rem; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React
+    function App() {
+      const [count, setCount] = useState(0)
+      return (
+        <div>
+          <h3>React 计数器</h3>
+          <button onClick={() => setCount(c => c - 1)}>-</button>
+          <span>{count}</span>
+          <button onClick={() => setCount(c => c + 1)}>+</button>
+          <p>双倍：{count * 2}</p>
+        </div>
+      )
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+  </script>
+</body>
+</html>

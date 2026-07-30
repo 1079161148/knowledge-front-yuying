@@ -19,6 +19,8 @@ Thumbs.db
 dist/
 build/
 coverage/
+site/           # MkDocs 生成的静态站点
+.mkdocs/        # MkDocs 缓存
 
 # Environment variables
 .env
