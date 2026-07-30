@@ -1,0 +1,30 @@
+# ===== MkDocs 构建产物 =====
+site/
+.mkdocs/
+
+# ===== Node / 前端 =====
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# ===== Python =====
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# ===== 编辑器 / 操作系统 =====
+.vscode/
+.idea/
+*.sublime-project
+*.workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== 环境变量 =====
+.env
+.env.local
+.env.*.local
