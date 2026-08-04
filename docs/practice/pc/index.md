@@ -21,6 +21,8 @@
 - [Web Worker 大数据计算](pc-webworker.md) — 主线程不卡死、分块进度、terminate
 - [音视频处理（播放/截帧/压缩）](pc-media-processing.md) — canvas 截帧、MediaRecorder、WebCodecs 兼容
 - [直播（WebRTC / HLS / FLV 低延迟）](pc-live.md) — 推流/拉流选型、延迟对比、flv.js/hls.js
+- [前端大数据导出](pc-bigdata-export.md) — 百万行 CSV/Excel 不卡死：Worker + 流式落盘
+- [实时看板卡顿优化](pc-realtime-dashboard.md) — 高频推送合帧、环形缓冲、虚拟滚动
 
 ## 怎么跑
 - 直接在文档内嵌 `iframe` 交互；或打开 `docs/demos/pc-*.html` 源文件。

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · 前端大数据导出</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
+  .row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button:hover { border-color: #58a6ff; }
+  .panel { display: flex; gap: 12px; }
+  .box { flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+  .box h4 { margin: 0 0 8px; font-size: 13px; color: #7ee787; }
+  .metric { font-size: 12px; color: #8b949e; margin-top: 6px; }
+  .metric b { color: #58a6ff; font-size: 18px; }
+  #bar1, #bar2 { height: 6px; background: #30363d; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  #bar1 > i, #bar2 > i { display: block; height: 100%; width: 0; background: #3fb950; transition: width .1s; }
+  .note { font-size: 11px; color: #8b949e; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>前端大数据导出（50 万行 CSV，不卡死）</h3>
+  <div class="tip">真实难点：① 一次性拼字符串同步生成 Blob → 主线程冻结、内存爆炸；② 生产用 Web Worker 拼 + StreamSaver 流式落盘，内存恒定；③ CSV 字段含逗号/引号必须转义，否则 Excel 错位。</div>
+  <div class="row">
+    <button id="sync">主线程同步导出 50 万行</button>
+    <button id="async">Worker + 流式导出 50 万行</button>
+    <button id="cancel">取消导出</button>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h4>主线程同步（错误示范）</h4>
+      <div class="metric">耗时：<b id="mSync">—</b> ms</div>
+      <div class="metric" id="mSyncNote">点这里期间页面会冻结，按钮点不动</div>
+      <div id="bar1"><i id="bar1Fill"></i></div>
+    </div>
+    <div class="box">
+      <h4>Worker + 流式（生产推荐）</h4>
+      <div class="metric">耗时：<b id="mAsync">—</b> ms</div>
+      <div class="metric">进度：<b id="mAsyncProg">0</b>%</div>
+      <div id="bar2"><i id="bar2Fill"></i></div>
+    </div>
+  </div>
+  <div class="note">注：本 demo 为免依赖用 Blob 下载模拟流式进度；生产环境用 StreamSaver.js（createWriteStream + writer.write 分块）实现真正边生成边落盘，内存不涨。</div>
+</div>
+<script>
+const ROWS = 500_000;
+const mSync = document.getElementById('mSync'), mAsync = document.getElementById('mAsync');
+const mAsyncProg = document.getElementById('mAsyncProg');
+const bar1Fill = document.getElementById('bar1Fill'), bar2Fill = document.getElementById('bar2Fill');
+const mSyncNote = document.getElementById('mSyncNote');
+
+function esc(v) { // CSV 转义
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+document.getElementById('sync').onclick = () => {
+  const t = performance.now();
+  let csv = 'id,name,amount,note\n';
+  for (let i = 0; i < ROWS; i++) {
+    csv += i + ',' + esc('user' + i) + ',' + (Math.random()*10000).toFixed(2) + ',' + esc('备注,含逗号"引号') + '\n';
+  }
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'sync-export.csv'; a.click();
+  URL.revokeObjectURL(url);
+  mSync.textContent = (performance.now() - t).toFixed(0);
+  mSyncNote.textContent = '导出完成，期间页面冻结（假死）';
+  bar1Fill.style.width = '100%';
+};
+
+let worker = null;
+document.getElementById('async').onclick = () => {
+  if (worker) worker.terminate();
+  const code = `
+    self.onmessage = (e) => {
+      const ROWS = e.data;
+      const esc = (v) => { const s = String(v); return /[",\\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+      let csv = 'id,name,amount,note\\n';
+      const chunk = 20000;
+      for (let s = 0; s < ROWS; s += chunk) {
+        const end = Math.min(s + chunk, ROWS);
+        for (let i = s; i < end; i++) {
+          csv += i + ',' + esc('user'+i) + ',' + (Math.random()*10000).toFixed(2) + ',' + esc('备注,含逗号"引号') + '\\n';
+        }
+        self.postMessage({ type: 'progress', p: Math.round(end / ROWS * 100) });
+      }
+      self.postMessage({ type: 'done', csv });
+    };`;
+  const blob = new Blob([code], { type: 'application/javascript' });
+  worker = new Worker(URL.createObjectURL(blob));
+  const t0 = performance.now();
+  worker.onmessage = (ev) => {
+    const d = ev.data;
+    if (d.type === 'progress') { mAsyncProg.textContent = d.p; bar2Fill.style.width = d.p + '%'; }
+    if (d.type === 'done') {
+      const b = new Blob([d.csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(b); const a = document.createElement('a'); a.href = url; a.download = 'worker-export.csv'; a.click();
+      URL.revokeObjectURL(url);
+      mAsync.textContent = (performance.now() - t0).toFixed(0);
+      mAsyncProg.textContent = 100; bar2Fill.style.width = '100%'; worker.terminate(); worker = null;
+    }
+  };
+  worker.postMessage(ROWS);
+};
+document.getElementById('cancel').onclick = () => { if (worker) { worker.terminate(); worker = null; mAsyncProg.textContent = '已取消'; } };
+</script>
+</body>
+</html>

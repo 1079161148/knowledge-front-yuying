@@ -299,6 +299,8 @@ nav:
           - Web Worker 大数据计算: practice/pc/pc-webworker.md
           - 音视频处理（播放/截帧/压缩）: practice/pc/pc-media-processing.md
           - 直播（WebRTC / HLS / FLV 低延迟）: practice/pc/pc-live.md
+          - 前端大数据导出: practice/pc/pc-bigdata-export.md
+          - 实时看板卡顿优化: practice/pc/pc-realtime-dashboard.md
       - 移动端难点亮点业务实战:
           - 总览: practice/mobile/index.md
           - 历史入口（已迁移至上方子菜单）: practice/mobile.md

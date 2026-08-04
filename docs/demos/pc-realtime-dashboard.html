@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · 实时看板卡顿优化</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
+  .row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button:hover { border-color: #58a6ff; }
+  .panel { display: flex; gap: 12px; }
+  .box { flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+  .box h4 { margin: 0 0 8px; font-size: 13px; color: #7ee787; }
+  .metric { font-size: 12px; color: #8b949e; margin-top: 6px; }
+  .metric b { font-size: 18px; }
+  .fps-ok { color: #3fb950; } .fps-bad { color: #f85149; }
+  #list1, #list2 { height: 220px; overflow: hidden; margin-top: 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .row-item { padding: 3px 6px; border-bottom: 1px solid #21262d; }
+  .row-item:nth-child(odd) { background: #0d1117; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>实时看板卡顿优化（WebSocket 100 条/秒模拟）</h3>
+  <div class="tip">真实难点：① 每条消息直接渲染 → 渲染次数远超 60fps，CPU 100% 卡死；② 合帧（rAF 每帧只渲染一次）+ 环形缓冲 + 虚拟滚动才是正解；③ 隐藏页面要停渲染。</div>
+  <div class="row">
+    <button id="start">开始推送 100 条/秒</button>
+    <button id="stop">停止</button>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h4>裸渲染（每消息重排，错误示范）</h4>
+      <div class="metric">FPS：<b id="fps1" class="fps-bad">0</b></div>
+      <div class="metric">本帧 DOM 操作：<b id="ops1">0</b> 次</div>
+      <div id="list1"></div>
+    </div>
+    <div class="box">
+      <h4>rAF 合帧 + 环形缓冲（生产推荐）</h4>
+      <div class="metric">FPS：<b id="fps2" class="fps-ok">0</b></div>
+      <div class="metric">本帧 DOM 操作：<b id="ops2">0</b> 次</div>
+      <div id="list2"></div>
+    </div>
+  </div>
+</div>
+<script>
+const RATE = 100; // 条/秒
+let timer = null, running = false;
+const list1 = document.getElementById('list1'), list2 = document.getElementById('list2');
+const fps1 = document.getElementById('fps1'), fps2 = document.getElementById('fps2');
+const ops1 = document.getElementById('ops1'), ops2 = document.getElementById('ops2');
+
+// FPS 统计
+let frames1 = 0, frames2 = 0, lastT = performance.now();
+setInterval(() => {
+  const now = performance.now(); const dt = (now - lastT) / 1000; lastT = now;
+  fps1.textContent = Math.round(frames1 / dt); fps2.textContent = Math.round(frames2 / dt);
+  frames1 = 0; frames2 = 0;
+}, 1000);
+
+function gen() { return '订单#' + Math.floor(Math.random()*1e6) + ' ¥' + (Math.random()*1000).toFixed(2); }
+
+// --- 左：裸渲染 ---
+let ops1c = 0;
+function naiveRender(item) {
+  const d = document.createElement('div'); d.className = 'row-item'; d.textContent = item;
+  list1.prepend(d);
+  while (list1.childElementCount > 60) list1.lastChild.remove();
+  ops1c++;
+}
+// --- 右：rAF 合帧 + 环形缓冲 ---
+const buf = []; let ops2c = 0;
+function flush() {
+  frames2++;
+  if (buf.length) {
+    const frag = document.createDocumentFragment();
+    for (const item of buf) { const d = document.createElement('div'); d.className = 'row-item'; d.textContent = item; frag.prepend(d); }
+    list2.prepend(frag);
+    while (list2.childElementCount > 60) list2.lastChild.remove();
+    ops2c += buf.length; buf.length = 0;
+  }
+  ops2.textContent = ops2c; ops2c = 0;
+  if (running) requestAnimationFrame(flush);
+}
+
+document.getElementById('start').onclick = () => {
+  if (running) return; running = true; ops1c = 0;
+  const interval = 1000 / RATE;
+  timer = setInterval(() => {
+    const item = gen();
+    // 裸渲染：每条直接 DOM 操作
+    naiveRender(item); frames1++;
+    // 合帧：只入缓冲，rAF 统一消费
+    buf.push(item);
+  }, interval);
+  requestAnimationFrame(flush);
+  const counter = setInterval(() => { if (!running) { clearInterval(counter); return; } ops1.textContent = ops1c; ops1c = 0; }, 1000);
+};
+document.getElementById('stop').onclick = () => { running = false; clearInterval(timer); list1.innerHTML = ''; list2.innerHTML = ''; buf.length = 0; ops1.textContent = 0; ops2.textContent = 0; };
+</script>
+</body>
+</html>
