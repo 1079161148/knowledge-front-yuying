@@ -1,7 +1,7 @@
 // copy-vendor.mjs
 // 将 npm 管理的框架依赖拷贝到 docs/demos/vendor 与 docs/assets/vendor，
 // 替代原先手工下载、版本写死的裸文件，便于 `npm update` 统一升级、CI 可复现。
-import { mkdirSync, copyFileSync, existsSync } from 'node:fs'
+import { mkdirSync, cpSync, existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -31,7 +31,8 @@ for (const [src, dir, name] of jobs) {
     console.warn('⚠️  未找到（跳过）:', src, '— 请先 npm install')
     continue
   }
-  copyFileSync(from, to)
+  // dereference: true 展开符号链接为真实文件，避免 GitHub Pages 不支持 symlink
+  cpSync(from, to, { dereference: true })
   console.log('✅', src, '→', name)
   ok++
 }
