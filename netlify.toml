@@ -1,0 +1,13 @@
+[build]
+  command = "npm install && npm run vendor:sync && mkdocs build --strict"
+  publish = "site"
+
+[build.environment]
+  PYTHON_VERSION = "3.12"
+  NODE_VERSION = "22"
+
+# SPA 回退（mkdocs 为静态多页，无需，但保留以备子路径）
+[[redirects]]
+  from = "/*"
+  to = "/:splat"
+  status = 200
