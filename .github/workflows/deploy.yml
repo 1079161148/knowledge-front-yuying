@@ -48,6 +48,16 @@ jobs:
       - name: Build site (统一命令)
         run: npm run build:site
 
+      - name: Resolve symlinks in site (GitHub Pages 不支持符号链接)
+        if: runner.os == 'Linux'
+        run: |
+          find "$SITE_DIR" -type l | while read -r link; do
+            target=$(readlink -f "$link")
+            rm -f "$link"
+            cp -L "$target" "$link"
+          done
+          echo "剩余符号链接数：$(find "$SITE_DIR" -type l | wc -l)"
+
       - name: Upload site artifact
         uses: actions/upload-artifact@v4
         with:
