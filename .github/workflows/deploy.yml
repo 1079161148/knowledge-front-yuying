@@ -76,8 +76,6 @@ jobs:
   deploy-cloudflare:
     needs: build
     runs-on: ubuntu-latest
-    # 未配置 token 时跳过，不阻断其它平台
-    if: ${{ secrets.CF_API_TOKEN != '' }}
     env:
       CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -89,13 +87,13 @@ jobs:
           name: site
           path: ${{ env.SITE_DIR }}
       - name: Deploy to Cloudflare Pages
+        if: ${{ env.CF_API_TOKEN != '' }}
         run: npx --yes wrangler@latest pages deploy ${{ env.SITE_DIR }} --project-name="$CF_PROJECT_NAME" --commit-dirty=true
 
   # ---------- 3. Vercel ----------
   deploy-vercel:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ secrets.VERCEL_TOKEN != '' }}
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -107,13 +105,13 @@ jobs:
           name: site
           path: ${{ env.SITE_DIR }}
       - name: Deploy to Vercel
+        if: ${{ env.VERCEL_TOKEN != '' }}
         run: npx --yes vercel@latest deploy ${{ env.SITE_DIR }} --prod --token="$VERCEL_TOKEN" --yes
 
   # ---------- 4. Netlify ----------
   deploy-netlify:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ secrets.NETLIFY_AUTH_TOKEN != '' }}
     env:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -124,4 +122,5 @@ jobs:
           name: site
           path: ${{ env.SITE_DIR }}
       - name: Deploy to Netlify
+        if: ${{ env.NETLIFY_AUTH_TOKEN != '' }}
         run: npx --yes netlify-cli@latest deploy --prod --dir=${{ env.SITE_DIR }} --auth="$NETLIFY_AUTH_TOKEN" --site="$NETLIFY_SITE_ID"
