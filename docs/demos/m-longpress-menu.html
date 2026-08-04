@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端实战 · 长按弹出菜单</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+  h3 { font-size: 15px; margin: 4px 0; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; line-height: 1.5; }
+  .chat { display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 72%; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.5; user-select: none; }
+  .me { align-self: flex-end; background: #1f6feb; color: #fff; }
+  .you { align-self: flex-start; background: #21262d; border: 1px solid #30363d; }
+  .hint { font-size: 12px; color: #8b949e; text-align: center; margin: 10px 0; }
+  /* 系统风 ActionSheet */
+  .mask { position: fixed; inset: 0; background: #0008; display: none; z-index: 10; }
+  .mask.show { display: block; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #161b22; border-radius: 16px 16px 0 0; padding: 8px calc(8px + env(safe-area-inset-bottom)) 8px; z-index: 11; transform: translateY(100%); transition: transform .25s; }
+  .sheet.show { transform: translateY(0); }
+  .sheet .item { padding: 14px; text-align: center; font-size: 15px; border-bottom: 1px solid #30363d; }
+  .sheet .item:last-child { border-bottom: none; }
+  .sheet .item.danger { color: #ff7b72; }
+  .sheet .cancel { margin-top: 6px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>长按弹出操作菜单（仿微信）</h3>
+  <div class="tip">真实难点：① 长按 500ms 触发，但期间手指移动超阈值要取消（防误触）；② 必须阻止系统默认选择/上下文菜单（contextmenu）；③ 弹层用 fixed + 安全区；④ 选择文本场景不能拦截。</div>
+  <div class="hint">长按下方任意气泡 0.5 秒</div>
+  <div class="chat">
+    <div class="msg you">在吗？方案我看完了</div>
+    <div class="msg me">在的，哪里要改？</div>
+    <div class="msg you">第 3 页的数据源麻烦发我一份</div>
+    <div class="msg me">好，稍等复制给你 👌</div>
+  </div>
+</div>
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet">
+  <div class="item" data-act="copy">复制</div>
+  <div class="item" data-act="forward">转发</div>
+  <div class="item" data-act="quote">引用</div>
+  <div class="item danger" data-act="del">删除</div>
+  <div class="item cancel" id="cancel">取消</div>
+</div>
+<script>
+const mask = document.getElementById('mask'), sheet = document.getElementById('sheet');
+let timer = null, startX = 0, startY = 0, target = null;
+function close(){ mask.classList.remove('show'); sheet.classList.remove('show'); }
+document.querySelectorAll('.msg').forEach(m => {
+  m.addEventListener('touchstart', e => {
+    target = m; startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    timer = setTimeout(() => { mask.classList.add('show'); sheet.classList.add('show'); if (navigator.vibrate) navigator.vibrate(15); }, 500);
+  }, { passive: true });
+  m.addEventListener('touchmove', e => {
+    const dx = Math.abs(e.touches[0].clientX - startX), dy = Math.abs(e.touches[0].clientY - startY);
+    if (dx > 10 || dy > 10) clearTimeout(timer); // 移动超阈值取消长按
+  }, { passive: true });
+  m.addEventListener('touchend', () => clearTimeout(timer));
+  m.addEventListener('contextmenu', e => e.preventDefault()); // 屏蔽系统菜单
+});
+mask.addEventListener('click', close);
+document.getElementById('cancel').onclick = close;
+sheet.querySelectorAll('.item[data-act]').forEach(it => it.onclick = () => {
+  const txt = target ? target.textContent : '';
+  alert(`操作：${it.textContent}\n内容：${txt.slice(0,12)}…`);
+  close();
+});
+</script>
+</body>
+</html>

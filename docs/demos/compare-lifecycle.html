@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>生命周期与副作用 · 三框架对比</title>
+  <link rel="stylesheet" href="../assets/vendor/framework-demo.css" />
+  <script src="vendor/vue2.js"></script>
+  <script>window.Vue2 = window.Vue;</script>
+  <script src="vendor/vue3.global.js"></script>
+  <script>window.Vue3 = window.Vue;</script>
+  <script src="vendor/react.production.min.js"></script>
+  <script src="vendor/react-dom.production.min.js"></script>
+  <script src="vendor/babel.min.js"></script>
+  <script src="../assets/vendor/framework-demo.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const vue3Code =
+`<script setup>
+import { ref, onMounted, watch } from 'vue'
+const count = ref(0)
+const log = ref(['① 组件创建（setup 执行）'])
+onMounted(() => log.value.push('② onMounted：DOM 已挂载'))
+watch(count, () => log.value.push('③ 状态更新 count=' + count.value))
+<\/script>
+
+<template>
+  <button @click="count++">+1</button>
+  <span class="big">{{ count }}</span>
+  <ul><li v-for="m in log">{{ m }}</li></ul>
+<\/template>`;
+
+    const vue2Code =
+`<template>
+  <button @click="count++">+1</button>
+  <span class="big">{{ count }}</span>
+  <ul><li v-for="m in log">{{ m }}</li></ul>
+</template>
+<script>
+export default {
+  data() { return { count: 0, log: ['① 组件创建'] } },
+  mounted() { this.log.push('② mounted：DOM 已挂载') },
+  watch: { count() { this.log.push('③ 状态更新 count=' + this.count) } }
+}
+<\/script>`;
+
+    const reactCode =
+`import { useState, useEffect } from 'react'
+export default function App() {
+  const [count, setCount] = useState(0)
+  const [log, setLog] = useState(['① 组件创建（函数体执行）'])
+  useEffect(() => { setLog(l => [...l, '② useEffect：已挂载']) }, [])
+  useEffect(() => { setLog(l => [...l, '③ 状态更新 count=' + count]) }, [count])
+  return (
+    <div>
+      <button onClick={() => setCount(c => c + 1)}>+1</button>
+      <span className="big">{count}</span>
+      <ul>{log.map((m, i) => <li key={i}>{m}</li>)}</ul>
+    </div>
+  )
+}`;
+
+    FrameworkDemo(document.getElementById('app'), [
+      {
+        label: 'Vue 3',
+        code: vue3Code,
+        mount: function (el) {
+          const app = Vue3.createApp({
+            template: '<div><button @click="count++">+1</button><span class="big">{{ count }}</span><ul><li v-for="m in log">{{ m }}</li></ul></div>',
+            setup() {
+              const { ref, onMounted, watch } = Vue3;
+              const count = ref(0);
+              const log = ref(['① 组件创建（setup 执行）']);
+              onMounted(() => log.value.push('② onMounted：DOM 已挂载'));
+              watch(count, () => log.value.push('③ 状态更新 count=' + count.value));
+              return { count, log };
+            }
+          });
+          app.mount(el);
+          return function () { app.unmount(); };
+        }
+      },
+      {
+        label: 'Vue 2',
+        code: vue2Code,
+        mount: function (el) {
+          const vm = new Vue2({
+            el: el,
+            template: '<div><button @click="count++">+1</button><span class="big">{{ count }}</span><ul><li v-for="m in log">{{ m }}</li></ul></div>',
+            data() { return { count: 0, log: ['① 组件创建'] }; },
+            mounted() { this.log.push('② mounted：DOM 已挂载'); },
+            watch: { count() { this.log.push('③ 状态更新 count=' + this.count); } }
+          });
+          return function () { vm.$destroy(); };
+        }
+      },
+      {
+        label: 'React',
+        code: reactCode,
+        mount: function (el) {
+          const src =
+`function App(){
+  const [count, setCount] = React.useState(0);
+  const [log, setLog] = React.useState(['① 组件创建（函数体执行）']);
+  React.useEffect(() => { setLog(l => [...l, '② useEffect：已挂载']); }, []);
+  React.useEffect(() => { setLog(l => [...l, '③ 状态更新 count=' + count]); }, [count]);
+  return (
+    <div>
+      <button onClick={() => setCount(c => c + 1)}>+1</button>
+      <span className="big">{count}</span>
+      <ul>{log.map((m, i) => <li key={i}>{m}</li>)}</ul>
+    </div>
+  );
+}`;
+          const out = Babel.transform(src, { presets: [['react', { runtime: 'classic' }]] }).code;
+          const holder = { v: null };
+          new Function('React', 'ReactDOM', 'el', 'h',
+            out + '\n;h.v = ReactDOM.createRoot(el); h.v.render(React.createElement(App));'
+          )(React, ReactDOM, el, holder);
+          return function () { if (holder.v) holder.v.unmount(); };
+        }
+      }
+    ]);
+  </script>
+</body>
+</html>

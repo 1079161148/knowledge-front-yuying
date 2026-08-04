@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC 实战 · 大文件断点续传</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; padding: 16px; background: #0f1419; color: #e6edf3; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
+    .tip { color: #7d8590; font-size: 12px; margin-bottom: 12px; }
+    input[type=file] { color: #e6edf3; font-size: 13px; }
+    button { background: #238636; color: #fff; border: 0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; margin: 0 6px 6px 0; }
+    button.ghost { background: #21262d; border: 1px solid #30363d; }
+    .bar { height: 14px; background: #161b22; border: 1px solid #30363d; border-radius: 7px; overflow: hidden; margin: 10px 0; }
+    .fill { height: 100%; width: 0; background: linear-gradient(90deg,#238636,#3fb950); transition: width .2s; }
+    .log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px; height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; font-family: ui-monospace, Menlo, monospace; }
+    .log .s { color: #3fb950; } .log .w { color: #d29922; }
+  </style>
+</head>
+<body>
+  <h3>大文件上传 · 分片 + 断点续传（前端分片逻辑演示）</h3>
+  <div class="tip">真实业务痛点：几百 MB 视频/压缩包直接传必超时。方案：切片（如 5MB）→ 算文件 hash → 问后端已传哪些片 → 只传缺失片 → 后端合并。刷新页面/断网可续。</div>
+  <input type="file" id="file" />
+  <div>
+    <button id="start">开始分片上传</button>
+    <button id="pause" class="ghost">暂停（模拟断点）</button>
+  </div>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <div class="log" id="log"></div>
+
+  <script>
+    const log = (c, m) => { const d = document.getElementById('log'); const e = document.createElement('div'); e.className = c; e.textContent = '› ' + m; d.appendChild(e); d.scrollTop = d.scrollHeight; };
+    const SIZE = 5 * 1024 * 1024; // 5MB 分片
+    let paused = false, uploaded = 0, chunks = 0;
+
+    document.getElementById('pause').onclick = () => { paused = true; log('w', '已暂停，已传 ' + uploaded + '/' + chunks + ' 片（可续传）'); };
+
+    document.getElementById('start').onclick = async () => {
+      const f = document.getElementById('file').files[0];
+      if (!f) { log('w', '请先选文件'); return; }
+      paused = false;
+      chunks = Math.ceil(f.size / SIZE);
+      uploaded = 0;
+      log('s', '文件 ' + f.name + ' 共 ' + chunks + ' 片，开始上传');
+      for (let i = 0; i < chunks; i++) {
+        if (paused) return; // 模拟断点：下次点开始从 uploaded 续
+        const blob = f.slice(i * SIZE, (i + 1) * SIZE);
+        // 真实场景：await fetch('/api/upload', {body: blob, headers:{chunk:i, hash:fileHash}})
+        await new Promise(r => setTimeout(r, 150)); // 模拟上传耗时
+        uploaded++;
+        document.getElementById('fill').style.width = (uploaded / chunks * 100) + '%';
+      }
+      log('s', '✓ 全部 ' + chunks + ' 片上传完成，后端合并即可');
+    };
+  </script>
+</body>
+</html>

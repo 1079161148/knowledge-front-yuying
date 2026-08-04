@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · 可拖拽看板 + 拖拽排序</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; }
+  .board { display: flex; gap: 12px; }
+  .col { flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px; min-height: 320px; }
+  .col.drag-over { border-color: #58a6ff; background: #1c2333; }
+  .col h4 { margin: 0 0 8px; font-size: 13px; color: #7ee787; display: flex; justify-content: space-between; }
+  .card { background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: grab; font-size: 13px; }
+  .card.dragging { opacity: .4; }
+  .card .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 10px; margin-top: 6px; }
+  .t-bug { background: #f8514922; color: #ff7b72; }
+  .t-feat { background: #3fb95022; color: #7ee787; }
+  .t-opt { background: #d2992222; color: #e3b341; }
+  .log { margin-top: 12px; font-size: 12px; color: #8b949e; background: #161b22; border-radius: 6px; padding: 8px; max-height: 90px; overflow: auto; }
+  .log b { color: #58a6ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>可拖拽看板（Kanban）</h3>
+  <div class="tip">拖动卡片在列之间移动 / 列内上下拖动排序。难点：原生 HTML5 拖拽在表格行、跨容器、触屏上都很坑，生产用 SortableJS 或 Pointer 事件自实现。</div>
+  <div class="board" id="board"></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+const data = {
+  'todo': { title: '待办', cards: [
+    { id: 'c1', text: '修复登录页 iOS 键盘顶飞', tag: 'bug', t: 't-bug' },
+    { id: 'c2', text: '订单导出加筛选', tag: 'feat', t: 't-feat' },
+    { id: 'c3', text: '首页加载 3.2s 优化', tag: 'opt', t: 't-opt' },
+  ]},
+  'doing': { title: '进行中', cards: [
+    { id: 'c4', text: '虚拟表格重构', tag: 'feat', t: 't-feat' },
+    { id: 'c5', text: '权限指令 v-perm', tag: 'feat', t: 't-feat' },
+  ]},
+  'done': { title: '已完成', cards: [
+    { id: 'c6', text: '接口限流中间件', tag: 'opt', t: 't-opt' },
+  ]},
+};
+const board = document.getElementById('board');
+const logEl = document.getElementById('log');
+function log(msg){ logEl.innerHTML = `<div>· ${msg}</div>` + logEl.innerHTML; }
+
+function render() {
+  board.innerHTML = '';
+  for (const [key, col] of Object.entries(data)) {
+    const colEl = document.createElement('div');
+    colEl.className = 'col'; colEl.dataset.col = key;
+    colEl.innerHTML = `<h4><span>${col.title}</span><span>${col.cards.length}</span></h4>`;
+    col.cards.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'card'; card.draggable = true; card.dataset.id = c.id;
+      card.innerHTML = `${c.text}<br><span class="tag ${c.t}">${c.tag}</span>`;
+      colEl.appendChild(card);
+    });
+    board.appendChild(colEl);
+  }
+  bind();
+}
+let dragId = null;
+function bind() {
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('dragstart', e => { dragId = card.dataset.id; card.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  });
+  document.querySelectorAll('.col').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+    col.addEventListener('drop', e => {
+      e.preventDefault(); col.classList.remove('drag-over');
+      const toCol = col.dataset.col;
+      const fromCol = findCol(dragId);
+      if (!fromCol) return;
+      const card = extract(fromCol, dragId);
+      // 计算插入位置：根据鼠标最近的卡片
+      const after = getDragAfter(col, e.clientY);
+      const idx = after ? data[toCol].cards.findIndex(c => c.id === after.dataset.id) : data[toCol].cards.length;
+      data[toCol].cards.splice(idx, 0, card);
+      log(`卡片 <b>${card.text}</b> 从 ${label(fromCol)} → ${label(toCol)}（位置 ${idx}）`);
+      render();
+    });
+  });
+}
+function findCol(id){ return Object.keys(data).find(k => data[k].cards.some(c => c.id === id)); }
+function extract(col, id){ const i = data[col].cards.findIndex(c => c.id === id); return data[col].cards.splice(i, 1)[0]; }
+function getDragAfter(col, y){ const els = [...col.querySelectorAll('.card:not(.dragging)')]; let closest = null, cd = -Infinity;
+  els.forEach(el => { const box = el.getBoundingClientRect(); const off = y - box.top - box.height/2; if (off < 0 && off > cd) { cd = off; closest = el; } }); return closest; }
+function label(k){ return data[k].title; }
+render();
+</script>
+</body>
+</html>

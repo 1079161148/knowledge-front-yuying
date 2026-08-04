@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端实战 · 音视频处理</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+  h3 { font-size: 15px; margin: 4px 0; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; line-height: 1.6; }
+  video { width: 100%; border-radius: 10px; background: #000; max-height: 280px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 10px; font-size: 12px; line-height: 1.6; }
+  .card h4 { margin: 0 0 6px; font-size: 13px; color: #7ee787; }
+  .card.warn { border-color: #f8514955; }
+  .card.warn h4 { color: #ff7b72; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 10px; background: #1f6feb33; color: #58a6ff; margin: 2px 2px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>移动端音视频处理</h3>
+  <div class="tip">真实难点：① iOS 微信 X5 内核 / Android WebView 对 `<video>` 行为不一（自动播放、内联播放、全屏）；② 真机权限（摄像头/麦克风）与 `<input capture>`；③ 跨域视频 canvas 截帧污染；④ 低端机解码掉帧。下面演示真机能力探测。</div>
+  <video id="v" controls playsinline webkit-playsinline></video>
+  <div class="grid">
+    <div class="card"><h4>能力探测</h4>
+      <div id="feat"></div>
+    </div>
+    <div class="card warn"><h4>真机必踩坑</h4>
+      <span class="tag">iOS 内联播放</span><span class="tag">X5 全屏</span><span class="tag">自动播放禁</span><span class="tag">canvas 污染</span><span class="tag">低端机掉帧</span>
+    </div>
+  </div>
+</div>
+<script>
+const feat = document.getElementById('feat');
+function support(mime){ const v = document.createElement('video'); return v.canPlayType(mime) ? '✅' : '❌'; }
+feat.innerHTML = `
+  <div>playsinline 内联: <b>${'playsInline' in document.createElement('video') ? '✅' : '❌'}</b></div>
+  <div>HLS (native): ${support('application/vnd.apple.mpegurl')} (iOS)</div>
+  <div>MP4/H264: ${support('video/mp4; codecs="avc1.42E01E"')}</div>
+  <div>WebM: ${support('video/webm')}</div>
+  <div>getUserMedia: <b>${'mediaDevices' in navigator && navigator.mediaDevices.getUserMedia ? '✅' : '❌'}</b></div>`;
+</script>
+</body>
+</html>

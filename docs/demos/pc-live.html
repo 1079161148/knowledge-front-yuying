@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · 直播低延迟播放</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; line-height: 1.5; }
+  .panel { display: flex; gap: 12px; flex-wrap: wrap; }
+  .box { flex: 1; min-width: 240px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+  .box h4 { margin: 0 0 8px; font-size: 13px; color: #7ee787; }
+  select, input { width: 100%; background: #0d1117; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 6px; font-size: 13px; margin: 4px 0; }
+  .metric { font-size: 12px; color: #8b949e; margin-top: 8px; }
+  .metric b { color: #58a6ff; font-size: 16px; }
+  .lat { display: flex; gap: 6px; align-items: flex-end; height: 60px; margin-top: 8px; }
+  .lat i { flex: 1; background: #3fb950; border-radius: 2px 2px 0 0; }
+  button { margin-top: 8px; background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; width: 100%; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>直播低延迟播放方案选型</h3>
+  <div class="tip">真实难点：① <b>RTMP</b> 推流（主播端）、<b>HLS/FLV</b> 拉流（观众端）链路不同；② 延迟：HLS 默认 6~30s、HTTP-FLV 1~3s、<b>WebRTC &lt;500ms</b>；③ 浏览器原生不支持 FLV/RTMP，要 hls.js / flv.js；④ 首屏、卡顿、延迟三者权衡。</div>
+  <div class="panel">
+    <div class="box"><h4>拉流协议选型</h4>
+      <select id="proto">
+        <option value="hls">HLS (m3u8) — 兼容最好，延迟 6~30s</option>
+        <option value="flv">HTTP-FLV — 延迟 1~3s，需 flv.js</option>
+        <option value="webrtc">WebRTC — 延迟 &lt;500ms，连麦首选</option>
+      </select>
+      <input id="url" placeholder="拉流地址，如 https://x/live.m3u8">
+      <button id="sim">模拟拉流延迟与首屏</button>
+      <div class="metric">预估延迟：<b id="lat">—</b></div>
+      <div class="metric">首屏时间：<b id="fst">—</b></div>
+      <div class="lat" id="latBar"></div>
+    </div>
+    <div class="box"><h4>推流端（主播）</h4>
+      <div class="metric">协议：<b>RTMP</b> → 服务端转封装</div>
+      <div class="metric">采集：<code>getUserMedia</code> 拿摄像头/麦克风</div>
+      <div class="metric">编码：H.264 + AAC（浏览器硬编）</div>
+      <div class="metric">库：OBS / <code>ffmpeg -i ... -c copy -f flv rtmp://</code></div>
+      <div class="metric" style="color:#e3b341">连麦 = 双向 WebRTC；纯观看可 HLS/FLV 省成本</div>
+    </div>
+  </div>
+</div>
+<script>
+const lat = document.getElementById('lat'), fst = document.getElementById('fst'), bar = document.getElementById('latBar');
+const presets = { hls: [12000, 1500, '#3fb950'], flv: [2000, 800, '#d29922'], webrtc: [400, 300, '#58a6ff'] };
+document.getElementById('sim').onclick = () => {
+  const p = document.getElementById('proto').value; const [l, f, c] = presets[p];
+  lat.textContent = (l/1000).toFixed(1) + 's'; fst.textContent = f + 'ms';
+  bar.innerHTML = ''; for (let i=0;i<20;i++){ const bar2=document.createElement('i'); bar2.style.height=(20+Math.random()*80)+'%'; bar2.style.background=c; bar.appendChild(bar2); }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "ai-runtime-demos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "知识库 AI 模块最小可运行示例（Vercel AI SDK v4 风格，与文档一致）",
+  "scripts": {
+    "chat": "node chat-stream.mjs",
+    "tool": "node tool-call.mjs"
+  },
+  "dependencies": {
+    "ai": "^4.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "dotenv": "^16.4.5"
+  }
+}

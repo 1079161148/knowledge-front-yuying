@@ -1,6 +1,8 @@
 # 🧩 基础语法 · 框架对比
 
 > 以「响应式与数据绑定」为开篇示例，演示 **Vue2 / Vue3 / React / Next.js / Nuxt 3** 的同屏对比写法，并提供**可直接运行的 Demo**（Tab 切换预览）。
+>
+> 📚 想要**从基础→核心→高级**逐层拆解（原理/源码/实战/可运行 Demo）的完整对比，见专栏：**[框架语法全对比 →](../framework-compare/index.md)**
 
 ---
 
@@ -101,13 +103,13 @@
 下面三个 Demo 为**独立 HTML**，使用 CDN 加载框架，**直接在浏览器运行**：
 
 === "Vue 3 在线演示"
-    <iframe src="demos/vue3-counter.html" width="100%" height="200" style="border:1px solid #2c5364;border-radius:8px"></iframe>
+    <iframe src="../../demos/vue3-counter.html" width="100%" height="200" style="border:1px solid #2c5364;border-radius:8px"></iframe>
 
 === "Vue 2 在线演示"
-    <iframe src="demos/vue2-counter.html" width="100%" height="200" style="border:1px solid #2c5364;border-radius:8px"></iframe>
+    <iframe src="../../demos/vue2-counter.html" width="100%" height="200" style="border:1px solid #2c5364;border-radius:8px"></iframe>
 
 === "React 在线演示"
-    <iframe src="demos/react-counter.html" width="100%" height="200" style="border:1px solid #2c5364;border-radius:8px"></iframe>
+    <iframe src="../../demos/react-counter.html" width="100%" height="200" style="border:1px solid #2c5364;border-radius:8px"></iframe>
 
 > 说明：Next.js / Nuxt 3 为"元框架"，需要构建环境（Node + 打包），无法以单文件直接运行；其语法已在上方的代码 Tab 中对比展示，实际项目请用 `create-next-app` / `nuxi init` 脚手架。
 
@@ -206,5 +208,7 @@ setCount(c => c + 1)
 | React | 不可变 + 重渲染 | `useState` | 大型应用、跨端 |
 | Next.js | 同 React | 同 React | React 全栈 / SSR |
 | Nuxt 3 | 同 Vue3 | 同 Vue3 | Vue 全栈 / SSR |
+
+> 底层机制补强 → [JS 异步与事件循环（前端核心基础）](async-eventloop.md)：吃透单线程非阻塞，才能看懂 Promise / async-await / 流式。
 
 > 下一板块预告：**进阶篇**（组合式 API vs Hooks、虚拟 DOM 与 Diff、性能优化）。

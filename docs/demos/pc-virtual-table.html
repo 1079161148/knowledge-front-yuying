@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC 实战 · 万行表格虚拟滚动</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; padding: 16px; background: #0f1419; color: #e6edf3; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
+    .tip { color: #7d8590; font-size: 12px; margin-bottom: 12px; }
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    button { background: #238636; color: #fff; border: 0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    button.ghost { background: #21262d; border: 1px solid #30363d; }
+    .viewport { height: 360px; overflow-y: auto; border: 1px solid #30363d; border-radius: 8px; position: relative; background: #161b22; }
+    .phantom { position: relative; width: 100%; }
+    .row { position: absolute; left: 0; right: 0; display: grid; grid-template-columns: 80px 1fr 1fr 120px 100px; gap: 0; align-items: center; padding: 0 12px; height: 36px; border-bottom: 1px solid #21262d; font-size: 13px; }
+    .row.head { position: sticky; top: 0; background: #1f2937; font-weight: 600; z-index: 2; color: #58a6ff; }
+    .row:nth-child(even) { background: #11161d; }
+    .row:hover { background: #1c2530; }
+    .status-ok { color: #3fb950; } .status-fail { color: #f85149; }
+  </style>
+</head>
+<body>
+  <h3>万行订单表格 · 虚拟滚动（只渲染可视区）</h3>
+  <div class="tip">下方生成 50,000 行数据，但 DOM 里永远只有约 15 行。滚动看 FPS 与内存——传统全量渲染会卡死。</div>
+  <div class="toolbar">
+    <button id="gen">生成 50000 行</button>
+    <button class="ghost" id="count">当前 DOM 行数: 0</button>
+  </div>
+  <div class="viewport" id="vp">
+    <div class="phantom" id="phantom">
+      <div class="row head"><div>ID</div><div>订单号</div><div>客户</div><div>金额</div><div>状态</div></div>
+    </div>
+  </div>
+
+  <script>
+    const ROW_H = 36, OVERSCAN = 5;
+    const vp = document.getElementById('vp');
+    const phantom = document.getElementById('phantom');
+    const countEl = document.getElementById('count');
+    let data = [];
+
+    function gen(n) {
+      data = Array.from({ length: n }, (_, i) => ({
+        id: i + 1,
+        no: 'NO' + (100000 + i),
+        cust: '客户' + String.fromCharCode(65 + (i % 26)) + (i % 997),
+        amount: (Math.random() * 9000 + 100).toFixed(2),
+        ok: i % 7 !== 0,
+      }));
+      phantom.style.height = (data.length * ROW_H) + 'px';
+      render();
+    }
+
+    function render() {
+      const scrollTop = vp.scrollTop;
+      const vh = vp.clientHeight;
+      let start = Math.floor(scrollTop / ROW_H) - OVERSCAN;
+      let end = Math.ceil((scrollTop + vh) / ROW_H) + OVERSCAN;
+      start = Math.max(0, start);
+      end = Math.min(data.length, end);
+
+      // 移除旧数据行，仅保留 head
+      phantom.querySelectorAll('.row:not(.head)').forEach(el => el.remove());
+      const frag = document.createDocumentFragment();
+      for (let i = start; i < end; i++) {
+        const d = data[i];
+        const el = document.createElement('div');
+        el.className = 'row';
+        el.style.top = (i * ROW_H) + 'px';
+        el.innerHTML = `<div>${d.id}</div><div>${d.no}</div><div>${d.cust}</div>
+          <div>¥${d.amount}</div>
+          <div class="${d.ok ? 'status-ok' : 'status-fail'}">${d.ok ? '成功' : '失败'}</div>`;
+        frag.appendChild(el);
+      }
+      phantom.appendChild(frag);
+      countEl.textContent = '当前 DOM 行数: ' + (end - start);
+    }
+
+    vp.addEventListener('scroll', () => requestAnimationFrame(render), { passive: true });
+    document.getElementById('gen').addEventListener('click', () => gen(50000));
+    gen(50000);
+  </script>
+</body>
+</html>

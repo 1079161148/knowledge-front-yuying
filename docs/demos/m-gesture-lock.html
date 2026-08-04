@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端实战 · 手势密码解锁</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; }
+  h3 { font-size: 15px; margin: 4px 0; }
+  .tip { font-size: 12px; color: #8b949e; text-align: center; margin-bottom: 16px; line-height: 1.5; }
+  canvas { touch-action: none; background: #161b22; border-radius: 12px; }
+  .status { font-size: 13px; margin: 14px 0; color: #e3b341; min-height: 20px; }
+  .status.ok { color: #7ee787; } .status.err { color: #ff7b72; }
+  button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 8px; padding: 8px 16px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>手势密码解锁</h3>
+  <div class="tip">真实难点：① 用 Pointer 事件统一触屏/鼠标；② touch-action:none 阻止滚动穿透；③ 连线要吸附到最近节点（阈值判定）；④ 安全区适配；⑤ 后端应存"图案哈希"而非明文。</div>
+  <canvas id="cv" width="300" height="300"></canvas>
+  <div class="status" id="st">滑动连接至少 4 个点</div>
+  <button id="reset">重置</button>
+</div>
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), st = document.getElementById('st');
+const SIZE = 300, N = 3, GAP = SIZE / (N + 1), R = 26;
+const pts = []; for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) pts.push({ x: GAP*(c+1), y: GAP*(r+1), i: r*N+c, on: false });
+let drawing = false, path = [], cur = null;
+const setStatus = (t, cls) => { st.textContent = t; st.className = 'status' + (cls? ' '+cls : ''); };
+function draw() {
+  ctx.clearRect(0,0,SIZE,SIZE);
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,R,0,7); ctx.fillStyle = p.on ? '#58a6ff' : '#21262d'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#30363d'; ctx.stroke(); });
+  if (path.length) {
+    ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+    path.forEach(p => ctx.lineTo(p.x, p.y));
+    if (cur) ctx.lineTo(cur.x, cur.y);
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 3; ctx.stroke();
+  }
+}
+function hit(x,y){ return pts.find(p => Math.hypot(p.x-x, p.y-y) < R + 8); }
+function pos(e){ const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+cv.addEventListener('pointerdown', e => { drawing = true; cv.setPointerCapture(e.pointerId); const p = pos(e); const h = hit(p.x,p.y); if (h) { h.on=true; path.push(h); } draw(); });
+cv.addEventListener('pointermove', e => { if (!drawing) return; const p = pos(e); cur = p; const h = hit(p.x,p.y); if (h && !h.on) { h.on=true; path.push(h); } draw(); });
+cv.addEventListener('pointerup', () => {
+  drawing = false; cur = null;
+  if (path.length >= 4) {
+    const pwd = path.map(p => p.i).join('');
+    setStatus('已记录图案序列：' + pwd + '（长度'+path.length+'）', 'ok');
+  } else setStatus('至少连接 4 个点！', 'err');
+  draw();
+});
+document.getElementById('reset').onclick = () => { path = []; pts.forEach(p => p.on=false); setStatus('滑动连接至少 4 个点'); draw(); };
+draw();
+</script>
+</body>
+</html>

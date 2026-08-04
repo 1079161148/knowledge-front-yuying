@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>浏览器原生 ESM Demo</title>
   <style>
-    body { font-family: system-ui, sans-serif; text-align: center; padding: 1.2rem; margin: 0; color: #e0f7fa; }
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 1.2rem; margin: 0; color: #e0f7fa; background: #0d161d; }
+    h3 { color: #00e5ff; margin-top: 0; }
     code { background: #203a43; padding: .1rem .35rem; border-radius: 4px; }
+    #out { color: #00e5ff; font-size: 1.4rem; }
   </style>
 </head>
 <body>
   <h3>浏览器原生 ES Module</h3>
   <p>下方文字由 <code>import</code> 一个 Blob 模块动态生成：</p>
-  <p id="out" style="font-size:1.4rem;color:#00e5ff">加载中…</p>
+  <p id="out">加载中…</p>
 
   <script type="module">
     // 用 Blob 模拟一个 ES 模块

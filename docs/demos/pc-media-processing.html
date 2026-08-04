@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · 音视频处理（客户端）</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; line-height: 1.5; }
+  video { width: 100%; max-height: 280px; background: #000; border-radius: 8px; }
+  .row { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+  button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button:hover { border-color: #58a6ff; }
+  .panel { display: flex; gap: 12px; flex-wrap: wrap; }
+  .box { flex: 1; min-width: 220px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+  .box h4 { margin: 0 0 8px; font-size: 13px; color: #7ee787; }
+  .log { font-size: 12px; color: #8b949e; margin-top: 8px; }
+  canvas { width: 100%; background: #000; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>音视频处理（浏览器客户端）</h3>
+  <div class="tip">真实难点：① 本地选视频在 <b>video</b> 播放并用 <b>canvas</b> 截帧；② 用 <b>MediaRecorder + Canvas.captureStream</b> 做客户端压缩/加水印导出；③ 大文件别传服务端转码（贵且慢）；④ WebCodecs 是新一代方案但兼容性差。下面演示"选片→截帧→导出 GIF/PNG"。</div>
+  <input type="file" id="file" accept="video/*" style="color:#8b949e">
+  <div class="row"><button id="play">播放</button><button id="capture">截当前帧</button><button id="gif">导出 3s 片段(WebM)</button></div>
+  <div class="panel">
+    <div class="box"><h4>源视频</h4><video id="v" controls></video></div>
+    <div class="box"><h4>截帧结果（canvas）</h4><canvas id="cv" width="320" height="180"></canvas><div class="log" id="log">选个视频试试</div></div>
+  </div>
+</div>
+<script>
+const file = document.getElementById('file'), v = document.getElementById('v'), cv = document.getElementById('cv'), ctx = cv.getContext('2d'), log = document.getElementById('log');
+file.onchange = () => { v.src = URL.createObjectURL(file.files[0]); log.textContent = '已加载，可播放/截帧'; };
+document.getElementById('play').onclick = () => v.play();
+document.getElementById('capture').onclick = () => { if (!v.src) return; ctx.drawImage(v, 0, 0, cv.width, cv.height); log.textContent = '已截取第 ' + v.currentTime.toFixed(1) + 's 帧（可右键另存）'; };
+document.getElementById('gif').onclick = async () => {
+  if (!v.src) return;
+  log.textContent = '录制中…（3s）';
+  const stream = cv.captureStream(30);
+  const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  const chunks = [];
+  rec.ondataavailable = e => chunks.push(e.data);
+  rec.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'clip.webm'; a.click();
+    log.textContent = '已导出 WebM 片段 ' + (blob.size/1024).toFixed(0) + 'KB（服务端转码见 Java 音视频章节）';
+  };
+  v.currentTime = 0; await v.play();
+  rec.start();
+  // 边播边画到 canvas
+  const t = setInterval(() => ctx.drawImage(v, 0, 0, cv.width, cv.height), 33);
+  setTimeout(() => { clearInterval(t); rec.stop(); v.pause(); }, 3000);
+};
+</script>
+</body>
+</html>

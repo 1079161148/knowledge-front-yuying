@@ -1,9 +1,191 @@
+/* ===== 顶部菜单 + 页脚固定，仅内容区滚动（不遮挡正文） ===== */
+
+/* ===== 顶部菜单常驻 + 滚动后仍可点击（关键修复） =====
+ * 根因：原本把 .md-tabs 单独抽成 sticky(top:2.4rem)，与 sticky 的 header(top:0)
+ * 错位；Material 滚动时会切换 header 高度/隐藏动画，导致 tabs 实际命中区域漂移，
+ * 向下滚动后点击区域错位→点不中。修复：header 整体固定常驻，tabs 作为 header 内部
+ * 一部分保持可见，彻底关闭 Material 的 header 隐藏动画，菜单位置稳定可点。
+ */
+
+/* 关闭 header 滚动隐藏动画（覆盖 Material 的 translateY 推走行为） */
+.md-header--hidden {
+  transform: translateY(0) !important;
+}
+
+/* header 固定常驻顶部：tabs 是 header 的子元素，会跟随一起常驻 */
+.md-header {
+  position: sticky !important;
+  top: 0;
+  z-index: 100;
+  transform: none !important;
+  /* 禁止滚动时高度收缩，避免 tabs 位置漂移导致点击错位 */
+  height: auto !important;
+  /* 始终参与布局、可交互，杜绝任何隐藏动画导致的点击命中错位 */
+  visibility: visible !important;
+  pointer-events: auto !important;
+  will-change: auto;
+}
+
+/* 锁定 header 内部高度，防止 Material 滚动时收缩 .md-header__inner 造成链接漂移 */
+.md-header__inner {
+  height: 2.4rem !important;
+  pointer-events: auto !important;
+}
+
+/* 顶栏加一条分隔阴影，固定时常驻感更强 */
+.md-header {
+  box-shadow: 0 1px 0 rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+}
+
+/* tabs 固定在 header 下方，滚动时保持可见、可点击 */
+.md-tabs {
+  position: sticky !important;
+  top: 2.4rem !important;
+  z-index: 3;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 滚动时 Material 会给 tabs 加 hidden 属性并淡出文字，覆盖为始终可见可点 */
+.md-tabs[hidden] {
+  display: block !important;
+}
+.md-tabs[hidden] .md-tabs__list,
+.md-tabs[hidden] .md-tabs__link {
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+/* 确保 tabs 链接始终可点击 */
+.md-tabs__link {
+  pointer-events: auto !important;
+}
+
+/* 左右侧边栏随页面滚动固定：top 需同时避开 header + tabs 的实际高度 */
+.md-sidebar {
+  position: sticky !important;
+  top: calc(2.4rem + 3rem) !important;   /* header 2.4rem + tabs ~3rem */
+  /* 限制最大高度为视口减去 header/tabs/footer，确保可见 */
+  max-height: calc(100vh - 2.4rem - 3rem);
+  align-self: flex-start;
+}
+
+/* 侧边栏内部滚动区减去 footer 留白即可 */
+.md-sidebar .md-sidebar__scrollwrap {
+  max-height: calc(100vh - 2.4rem - 3rem);
+}
+
+/* 移动端无 tabs，top 仅扣 header 高度 */
+@media screen and (max-width: 76.234375em) {
+  .md-sidebar,
+  .md-sidebar .md-sidebar__scrollwrap {
+    top: 2.4rem !important;
+    max-height: calc(100vh - 2.4rem);
+  }
+}
+
+/* 页脚固定到底部，常驻不随内容滚走 */
+.md-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+}
+
+/* 内容区底部留出足够页脚高度，避免正文被页脚遮挡 */
+.md-main__inner {
+  padding-bottom: 10rem !important;
+}
+
+/* 左侧/右侧目录滚动区也留出页脚高度，避免目录最后一项被固定页脚遮挡 */
+.md-sidebar__scrollwrap {
+  padding-bottom: 10rem !important;
+}
+
+/* 移动端页脚更高，留出更多空间 */
+@media screen and (max-width: 76.234375em) {
+  .md-main__inner {
+    padding-bottom: 13rem !important;
+  }
+
+  .md-sidebar__scrollwrap {
+    padding-bottom: 13rem !important;
+  }
+}
+
+/* ===== 回到顶部按钮 → 右下角正常按钮（上移到固定页脚之上） ===== */
+.md-top {
+  position: fixed !important;
+  top: auto !important;
+  left: auto !important;
+  right: 1.5rem !important;
+  bottom: 10.5rem !important;
+
+  /* 自适应文字宽度 */
+  width: auto !important;
+  height: auto !important;
+  min-width: auto !important;
+  min-height: auto !important;
+
+  /* 正常圆角按钮，保留文字 */
+  border-radius: 0.3rem !important;
+  padding: 0.5rem 0.9rem !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  overflow: visible;
+
+  box-shadow: 0 2px 8px rgba(38, 166, 154, 0.3);
+  z-index: 200;
+}
+
+/* 确保文字可见 */
+.md-top__text,
+.md-top span {
+  display: inline !important;
+}
+
+/* 图标大小 */
+.md-top svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* 移动端固定页脚更高，回到顶部按钮继续上移 */
+@media screen and (max-width: 76.234375em) {
+  .md-top {
+    bottom: 13.5rem !important;
+  }
+}
+
 /* ===== 科技风格增强样式 ===== */
 
-/* 顶栏渐变，营造科技氛围 */
+/* 顶栏渐变（沉稳深青蓝，与全站协调，不再刺眼亮蓝） */
 .md-header {
-  background: linear-gradient(90deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-  box-shadow: 0 2px 12px rgba(0, 229, 255, 0.15);
+  background: linear-gradient(90deg, #102a36 0%, #16384a 50%, #1c4660 100%);
+  box-shadow: 0 2px 12px rgba(38, 166, 154, 0.18);
+}
+
+/* 顶部 tabs 菜单：与 header 同源渐变，加轻微叠层，常驻可见且与 header 融合 */
+.md-tabs {
+  background: linear-gradient(90deg, #102a36 0%, #16384a 50%, #1c4660 100%) !important;
+  border-top: 1px solid rgba(77, 208, 225, 0.18);
+}
+.md-tabs__link {
+  color: rgba(225, 245, 250, 0.82) !important;
+}
+.md-tabs__link:hover,
+.md-tabs__link:focus {
+  color: #e0f7fa !important;
+}
+.md-tabs__link--active {
+  color: #e0f7fa !important;
+  border-bottom: 2px solid #4dd0e1 !important;
 }
 
 /* 侧边栏深色微调 */
@@ -11,23 +193,23 @@
   background: linear-gradient(180deg, #111b24 0%, #0d161d 100%);
 }
 
-/* 标题下划线渐变 */
+/* 标题下划线渐变（柔和青） */
 .md-content h1,
 .md-content h2 {
-  border-bottom: 1px solid rgba(0, 229, 255, 0.25);
+  border-bottom: 1px solid rgba(77, 208, 225, 0.28);
   padding-bottom: 0.3em;
 }
 
-/* 链接悬停发光 */
+/* 链接悬停发光（柔和青） */
 .md-content a:hover {
-  text-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
+  text-shadow: 0 0 6px rgba(77, 208, 225, 0.55);
 }
 
-/* 代码块左侧高亮 + 发光 */
+/* 代码块左侧高亮 + 发光（柔和青） */
 .highlight pre,
 .md-typeset pre {
-  border-left: 3px solid var(--md-accent-fg-color, #00e5ff);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.12);
+  border-left: 3px solid var(--md-accent-fg-color, #4dd0e1);
+  box-shadow: 0 0 10px rgba(77, 208, 225, 0.12);
   border-radius: 4px;
 }
 
@@ -41,11 +223,41 @@
   border-radius: 6px;
 }
 
-/* 首页标题渐变文字 */
+/* 首页标题渐变文字（青蓝→青绿，沉稳不刺眼） */
 .md-content h1 {
-  background: linear-gradient(90deg, #00e5ff, #7c4dff);
+  background: linear-gradient(90deg, #4dd0e1, #26a69a);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
+}
+
+/* ===== 页脚版权栏统一风格 ===== */
+.md-footer-meta {
+  background: linear-gradient(90deg, #102a36 0%, #16384a 50%, #1c4660 100%);
+}
+.md-copyright {
+  color: rgba(77, 208, 225, 0.85);
+  font-weight: 500;
+}
+
+/* ===== 上一页 / 下一页 箭头导航 ===== */
+.md-footer-nav {
+  background: linear-gradient(90deg, #102a36 0%, #16384a 50%, #1c4660 100%);
+}
+.md-footer-nav__link {
+  padding: 1rem 1.2rem;
+}
+/* 上一页添加左箭头、下一页添加右箭头 */
+.md-footer-nav__link--Prev .md-footer-nav__button::before {
+  content: "\2190";
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #4dd0e1;
+}
+.md-footer-nav__link--Next .md-footer-nav__button::after {
+  content: "\2192";
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #4dd0e1;
 }

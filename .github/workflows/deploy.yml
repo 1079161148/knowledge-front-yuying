@@ -1,0 +1,67 @@
+name: Deploy MkDocs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master          # 推送到 master 分支即自动构建部署
+  workflow_dispatch:    # 允许在 Actions 页面手动触发
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只允许一个部署，避免并发冲突
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install MkDocs & dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs-material \
+                      pymdownx \
+                      mkdocs-minify-plugin \
+                      mkdocs-git-revision-date-localized-plugin
+
+      - name: Setup Node (for demo vendor sync)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Sync demo vendor assets
+        run: npm run vendor:sync
+
+      - name: Build site
+        run: mkdocs build --strict
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site   # mkdocs 默认输出目录
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>表单绑定 · 三框架对比</title>
+  <link rel="stylesheet" href="../assets/vendor/framework-demo.css" />
+  <script src="vendor/vue2.js"></script>
+  <script>window.Vue2 = window.Vue;</script>
+  <script src="vendor/vue3.global.js"></script>
+  <script>window.Vue3 = window.Vue;</script>
+  <script src="vendor/react.production.min.js"></script>
+  <script src="vendor/react-dom.production.min.js"></script>
+  <script src="vendor/babel.min.js"></script>
+  <script src="../assets/vendor/framework-demo.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const vue3Code =
+`<script setup>
+import { reactive, computed } from 'vue'
+const form = reactive({ name: '', age: 18, subscribe: true })
+const preview = computed(() => JSON.stringify(form, null, 2))
+<\/script>
+
+<template>
+  <div class="row">
+    <label>姓名 <input v-model="form.name" /></label>
+    <label>年龄 <input type="number" v-model.number="form.age" /></label>
+    <label><input type="checkbox" v-model="form.subscribe" /> 订阅周报</label>
+  </div>
+  <pre>{{ preview }}</pre>
+<\/template>`;
+
+    const vue2Code =
+`<template>
+  <div class="row">
+    <label>姓名 <input v-model="form.name" /></label>
+    <label>年龄 <input type="number" v-model.number="form.age" /></label>
+    <label><input type="checkbox" v-model="form.subscribe" /> 订阅周报</label>
+  </div>
+  <pre>{{ preview }}</pre>
+</template>
+<script>
+export default {
+  data() {
+    return { form: { name: '', age: 18, subscribe: true } }
+  },
+  computed: {
+    preview() { return JSON.stringify(this.form, null, 2) }
+  }
+}
+<\/script>`;
+
+    const reactCode =
+`import { useState } from 'react'
+export default function FormDemo() {
+  const [form, setForm] = useState({ name: '', age: 18, subscribe: true })
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+  return (
+    <div>
+      <div className="row">
+        <label>姓名 <input value={form.name}
+          onChange={e => set('name', e.target.value)} /></label>
+        <label>年龄 <input type="number" value={form.age}
+          onChange={e => set('age', +e.target.value)} /></label>
+        <label><input type="checkbox" checked={form.subscribe}
+          onChange={e => set('subscribe', e.target.checked)} /> 订阅周报</label>
+      </div>
+      <pre>{JSON.stringify(form, null, 2)}</pre>
+    </div>
+  )
+}`;
+
+    FrameworkDemo(document.getElementById('app'), [
+      {
+        label: 'Vue 3',
+        code: vue3Code,
+        mount: function (el) {
+          const app = Vue3.createApp({
+            template: '<div><div class="row"><label>姓名 <input v-model="form.name" /></label><label>年龄 <input type="number" v-model.number="form.age" /></label><label><input type="checkbox" v-model="form.subscribe" /> 订阅周报</label></div><pre>{{ preview }}</pre></div>',
+            setup() {
+              const { reactive, computed } = Vue3;
+              const form = reactive({ name: '', age: 18, subscribe: true });
+              const preview = computed(() => JSON.stringify(form, null, 2));
+              return { form, preview };
+            }
+          });
+          app.mount(el);
+          return function () { app.unmount(); };
+        }
+      },
+      {
+        label: 'Vue 2',
+        code: vue2Code,
+        mount: function (el) {
+          const vm = new Vue2({
+            el: el,
+            template: '<div><div class="row"><label>姓名 <input v-model="form.name" /></label><label>年龄 <input type="number" v-model.number="form.age" /></label><label><input type="checkbox" v-model="form.subscribe" /> 订阅周报</label></div><pre>{{ preview }}</pre></div>',
+            data() { return { form: { name: '', age: 18, subscribe: true } }; },
+            computed: { preview() { return JSON.stringify(this.form, null, 2); } }
+          });
+          return function () { vm.$destroy(); };
+        }
+      },
+      {
+        label: 'React',
+        code: reactCode,
+        mount: function (el) {
+          const src =
+`function App(){
+  const [form, setForm] = React.useState({ name: '', age: 18, subscribe: true });
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  return (
+    <div>
+      <div className="row">
+        <label>姓名 <input value={form.name} onChange={e => set('name', e.target.value)} /></label>
+        <label>年龄 <input type="number" value={form.age} onChange={e => set('age', +e.target.value)} /></label>
+        <label><input type="checkbox" checked={form.subscribe} onChange={e => set('subscribe', e.target.checked)} /> 订阅周报</label>
+      </div>
+      <pre>{JSON.stringify(form, null, 2)}</pre>
+    </div>
+  );
+}`;
+          const out = Babel.transform(src, { presets: [['react', { runtime: 'classic' }]] }).code;
+          const holder = { v: null };
+          new Function('React', 'ReactDOM', 'el', 'h',
+            out + '\n;h.v = ReactDOM.createRoot(el); h.v.render(React.createElement(App));'
+          )(React, ReactDOM, el, holder);
+          return function () { if (holder.v) holder.v.unmount(); };
+        }
+      }
+    ]);
+  </script>
+</body>
+</html>

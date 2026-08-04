@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC 实战 · 请求层（无感刷新 + 取消 + 重试）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; padding: 16px; background: #0f1419; color: #e6edf3; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
+    .tip { color: #7d8590; font-size: 12px; margin-bottom: 12px; }
+    button { background: #238636; color: #fff; border: 0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; margin: 0 6px 6px 0; }
+    button.ghost { background: #21262d; border: 1px solid #30363d; }
+    .log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px; height: 280px; overflow-y: auto; font-size: 12px; line-height: 1.6; font-family: ui-monospace, Menlo, monospace; }
+    .log .t { color: #58a6ff; } .log .w { color: #d29922; } .log .e { color: #f85149; } .log .s { color: #3fb950; }
+  </style>
+</head>
+<body>
+  <h3>前端请求层实战（Axios 风格，纯原生模拟）</h3>
+  <div class="tip">生产必备三件套：① token 过期无感刷新（多个请求挂起等一个刷新）② 重复请求可取消 ③ 失败自动重试。下方用 mock 演示刷新逻辑。</div>
+  <button id="req1">发请求（带 token）</button>
+  <button id="req2" class="ghost">并发发 3 个（看是否只刷新一次）</button>
+  <button id="fail" class="ghost">触发失败重试</button>
+  <div class="log" id="log"></div>
+
+  <script>
+    const log = (c, m) => { const d = document.getElementById('log'); const e = document.createElement('div'); e.className = c; e.textContent = '› ' + m; d.appendChild(e); d.scrollTop = d.scrollHeight; };
+
+    // ---- 模拟后端 ----
+    let tokenValid = false;
+    function mockApi(needAuth) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (needAuth && !tokenValid) return reject({ status: 401 });
+          resolve({ data: 'OK', ts: Date.now() });
+        }, 400);
+      });
+    }
+    function mockRefresh() {
+      return new Promise(resolve => { setTimeout(() => { tokenValid = true; log('t', '刷新 token 成功'); resolve(); }, 600); });
+    }
+
+    // ---- 请求层核心：单飞刷新 ----
+    let refreshing = null;
+    function getToken() {
+      if (tokenValid) return Promise.resolve();
+      if (!refreshing) { refreshing = mockRefresh().finally(() => { refreshing = null; }); }
+      return refreshing;
+    }
+
+    // 重试
+    async function request(opts = {}, tries = 3) {
+      try {
+        return await mockApi(opts.needAuth);
+      } catch (e) {
+        if (e.status === 401) {
+          log('w', '401 → 无感刷新 token'); await getToken(); return request(opts, tries); // 刷新后重试原请求
+        }
+        if (tries > 1) { log('w', '失败，重试剩余 ' + (tries - 1)); return request(opts, tries - 1); }
+        throw e;
+      }
+    }
+
+    // ---- 演示 ----
+    document.getElementById('req1').onclick = async () => {
+      log('t', '发请求 A'); const r = await request({ needAuth: true }); log('s', 'A 成功 ' + JSON.stringify(r.data));
+    };
+    document.getElementById('req2').onclick = async () => {
+      log('t', '并发发 3 个请求'); await Promise.all([1,2,3].map(async i => { const r = await request({ needAuth: true }); log('s', '请求 '+i+' 成功'); }));
+      log('s', '—— 注意：只刷新了一次 token ——');
+    };
+    document.getElementById('fail').onclick = async () => {
+      log('t', '发会失败请求（模拟网络抖动）');
+      // 强制失败：用未授权 + 刷新后还失败一次
+      try { const r = await request({ needAuth: true }, 2); log('s', JSON.stringify(r)); }
+      catch (e) { log('e', '最终失败，已重试'); }
+    };
+  </script>
+</body>
+</html>

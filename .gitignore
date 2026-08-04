@@ -28,3 +28,18 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+
+# ===== 临时文件 / 缓存 =====
+*.tmp
+*.temp
+cache/
+.tmp/
+yarn-error.lock
+
+# ===== Java / Maven 构建产物 =====
+target/
+*.class
+*.jar
+!examples/**/*.class

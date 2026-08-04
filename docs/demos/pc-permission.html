@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC 实战 · 按钮级权限控制</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; padding: 16px; background: #0f1419; color: #e6edf3; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
+    .tip { color: #7d8590; font-size: 12px; margin-bottom: 12px; }
+    .bar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+    select { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; padding: 6px 8px; border-radius: 6px; }
+    .menu { display: flex; gap: 8px; margin-bottom: 14px; }
+    .menu button { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+    .menu button.on { background: #1f6feb; border-color: #1f6feb; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { padding: 8px 14px; border-radius: 6px; border: 0; cursor: pointer; font-size: 13px; }
+    .primary { background: #238636; color: #fff; } .warn { background: #d29922; color: #1a1a1a; }
+    .danger { background: #da3633; color: #fff; } .ghost { background: #21262d; border: 1px solid #30363d; color: #e6edf3; }
+    .hidden { display: none !important; }
+    .perm-tags span { display: inline-block; background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 2px 6px; font-size: 11px; margin: 2px; color: #58a6ff; }
+  </style>
+</head>
+<body>
+  <h3>中后台权限实战 · 角色切换看按钮显隐</h3>
+  <div class="tip">真实项目必踩：菜单权限（前端隐藏）+ 按钮权限（前端隐藏仅为体验，后端必须再校验一次）。切换角色看"删除/导出"按钮是否出现。</div>
+
+  <div class="bar">
+    <span>当前角色：</span>
+    <select id="role">
+      <option value="admin">admin（全部权限）</option>
+      <option value="editor">editor（可编辑，不可删/导出）</option>
+      <option value="viewer">viewer（只读）</option>
+    </select>
+  </div>
+
+  <div class="menu">
+    <button class="on">订单管理</button><button>客户管理</button><button>系统设置</button>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" data-perm="order:create">新建订单</button>
+    <button class="btn warn" data-perm="order:edit">编辑</button>
+    <button class="btn danger" data-perm="order:delete">删除</button>
+    <button class="btn ghost" data-perm="order:export">导出 Excel</button>
+    <button class="btn ghost" data-perm="order:audit">审计日志</button>
+  </div>
+
+  <div class="perm-tags" style="margin-top:16px">
+    <div>当前角色权限：</div>
+    <span id="tags"></span>
+  </div>
+
+  <script>
+    // 角色 → 权限码集合（真实项目来自登录接口返回的 permissions 数组）
+    const ROLE_PERMS = {
+      admin:  ['order:create','order:edit','order:delete','order:export','order:audit','sys:all'],
+      editor: ['order:create','order:edit'],
+      viewer: [],
+    };
+    const roleEl = document.getElementById('role');
+    const tagsEl = document.getElementById('tags');
+
+    function apply() {
+      const perms = ROLE_PERMS[roleEl.value] || [];
+      const set = new Set(perms);
+      document.querySelectorAll('[data-perm]').forEach(btn => {
+        btn.classList.toggle('hidden', !set.has(btn.dataset.perm));
+      });
+      tagsEl.innerHTML = perms.length ? perms.map(p => `<span>${p}</span>`).join('') : '<span style="color:#7d8590">（无）</span>';
+      // 强调：前端隐藏只是体验，后端接口需再次校验 set.has(perm)
+    }
+    roleEl.addEventListener('change', apply);
+    apply();
+  </script>
+</body>
+</html>

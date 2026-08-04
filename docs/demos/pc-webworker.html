@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · Web Worker 大数据计算</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
+  .row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button:hover { border-color: #58a6ff; }
+  .panel { display: flex; gap: 12px; }
+  .box { flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+  .box h4 { margin: 0 0 8px; font-size: 13px; color: #7ee787; }
+  .metric { font-size: 12px; color: #8b949e; margin-top: 6px; }
+  .metric b { color: #58a6ff; font-size: 18px; }
+  #bar { height: 6px; background: #30363d; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  #bar > i { display: block; height: 100%; width: 0; background: #3fb950; transition: width .1s; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>Web Worker 大数据计算（主线程不卡顿）</h3>
+  <div class="tip">真实难点：① 主线程同步算 500 万条会"假死"（掉帧、输入框卡住）；② Web Worker 不能碰 DOM，靠 postMessage 通信；③ 大数据要分块（chunk）上报进度；④ Worker 用完要 terminate 释放。</div>
+  <div class="row">
+    <button id="block">主线程同步算 300 万</button>
+    <button id="worker">Web Worker 算 300 万</button>
+    <button id="stop">终止 Worker</button>
+  </div>
+  <div class="panel">
+    <div class="box"><h4>主线程</h4><div class="metric">耗时：<b id="mMain">—</b> ms</div><div class="metric" id="mBlock">试着在同步计算时点按钮，会卡住</div></div>
+    <div class="box"><h4>Worker 线程</h4><div class="metric">耗时：<b id="mWorker">—</b> ms</div><div class="metric">进度：<b id="mProg">0</b>%</div><div id="bar"><i id="barFill"></i></div></div>
+  </div>
+</div>
+<script>
+const N = 3_000_000;
+const mMain = document.getElementById('mMain'), mWorker = document.getElementById('mWorker'), mProg = document.getElementById('mProg'), barFill = document.getElementById('barFill');
+const mBlock = document.getElementById('mBlock');
+
+document.getElementById('block').onclick = () => {
+  const t = performance.now();
+  let sum = 0;
+  for (let i = 0; i < N; i++) sum += Math.sqrt(i) * Math.sin(i); // 重计算
+  mMain.textContent = (performance.now() - t).toFixed(0);
+  mBlock.textContent = '计算完成，期间页面"假死"无响应';
+};
+
+let worker = null;
+document.getElementById('worker').onclick = () => {
+  if (worker) worker.terminate();
+  const code = `
+    self.onmessage = (e) => {
+      const N = e.data;
+      let sum = 0;
+      const chunk = 100000;
+      for (let s = 0; s < N; s += chunk) {
+        const end = Math.min(s + chunk, N);
+        for (let i = s; i < end; i++) sum += Math.sqrt(i) * Math.sin(i);
+        self.postMessage({ type: 'progress', p: Math.round(end / N * 100) });
+      }
+      self.postMessage({ type: 'done', sum, t: performance.now() });
+    };`;
+  const blob = new Blob([code], { type: 'application/javascript' });
+  worker = new Worker(URL.createObjectURL(blob));
+  const t0 = performance.now();
+  worker.onmessage = (ev) => {
+    const d = ev.data;
+    if (d.type === 'progress') { mProg.textContent = d.p; barFill.style.width = d.p + '%'; }
+    if (d.type === 'done') { mWorker.textContent = (performance.now() - t0).toFixed(0); mProg.textContent = 100; barFill.style.width = '100%'; worker.terminate(); worker = null; }
+  };
+  worker.postMessage(N);
+};
+document.getElementById('stop').onclick = () => { if (worker) { worker.terminate(); worker = null; mProg.textContent = '已终止'; } };
+</script>
+</body>
+</html>

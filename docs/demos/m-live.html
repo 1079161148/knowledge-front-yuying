@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端实战 · 直播低延迟</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+  h3 { font-size: 15px; margin: 4px 0; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; line-height: 1.6; }
+  .player { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 13px; position: relative; overflow: hidden; }
+  .pill { position: absolute; top: 8px; left: 8px; background: #f8514955; color: #ff7b72; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  .controls { display: flex; gap: 8px; margin-top: 10px; }
+  .controls button { flex: 1; background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 8px; padding: 8px; font-size: 13px; }
+  .metrics { display: flex; gap: 10px; margin-top: 10px; }
+  .m { flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px; text-align: center; }
+  .m b { display: block; font-size: 18px; color: #58a6ff; }
+  .m span { font-size: 11px; color: #8b949e; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>移动端直播（低延迟 + 连麦）</h3>
+  <div class="tip">真实难点：① 微信内置浏览器<b>禁止直接播 RTMP</b>，要 HLS/FLV；② iOS 微信里 `<video>` 自动全屏、连麦要原生；③ 低端机解码 1080p 掉帧；④ 移动网络抖动大，要更激进的缓冲策略。</div>
+  <div class="player"><span class="pill">LIVE</span>📺 直播画面区域（真机接 hls.js / flv.js / WebRTC）</div>
+  <div class="controls">
+    <button onclick="sel('hls')">HLS 观看</button>
+    <button onclick="sel('flv')">FLV 低延迟</button>
+    <button onclick="sel('rtc')">WebRTC 连麦</button>
+  </div>
+  <div class="metrics">
+    <div class="m"><b id="lat">—</b><span>延迟</span></div>
+    <div class="m"><b id="comp">—</b><span>移动兼容性</span></div>
+    <div class="m"><b id="cost">—</b><span>带宽成本</span></div>
+  </div>
+</div>
+<script>
+const data = {
+  hls: { lat: '6~30s', comp: '最优', cost: '低', note: 'iOS 原生支持，最稳，适合秀场' },
+  flv: { lat: '1~3s', comp: '中(需flv.js)', cost: '低', note: '电商低延迟观看首选' },
+  rtc: { lat: '<500ms', comp: '弱(需信令)', cost: '高', note: '连麦/互动，需 TURN 中继' },
+};
+function sel(k){ const d = data[k]; document.getElementById('lat').textContent = d.lat; document.getElementById('comp').textContent = d.comp; document.getElementById('cost').textContent = d.cost; }
+</script>
+</body>
+</html>

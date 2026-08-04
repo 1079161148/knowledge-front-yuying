@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端下拉刷新 + 上拉加载</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, "PingFang SC", sans-serif; background: #0d1117; color: #e6edf3; }
+  .app { max-width: 420px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+  header { padding: 12px 16px; background: #161b22; border-bottom: 1px solid #30363d; font-size: 16px; }
+  .viewport { flex: 1; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+  .indicator { height: 0; overflow: hidden; text-align: center; color: #8b949e; font-size: 13px; transition: height .2s; background: #161b22; }
+  .indicator.show { height: 48px; line-height: 48px; }
+  .indicator.loading { color: #58a6ff; }
+  .list { padding: 8px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+  .card .t { font-size: 14px; font-weight: 600; }
+  .card .d { font-size: 12px; color: #8b949e; margin-top: 4px; }
+  .tip { font-size: 12px; color: #8b949e; text-align: center; padding: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>📥 商品列表（下拉刷新 / 上拉加载）</header>
+  <div class="viewport" id="viewport">
+    <div class="indicator" id="indicator">↓ 下拉刷新</div>
+    <div class="list" id="list"></div>
+    <div class="tip" id="tip">上拉加载更多</div>
+  </div>
+</div>
+<script>
+  const viewport = document.getElementById('viewport');
+  const indicator = document.getElementById('indicator');
+  const list = document.getElementById('list');
+  const tip = document.getElementById('tip');
+
+  let page = 1;
+  function renderItems() {
+    let html = '';
+    const base = (page - 1) * 10;
+    for (let i = 1; i <= 10; i++) {
+      const id = base + i;
+      html += `<div class="card"><div class="t">商品 #${id}</div><div class="d">第 ${page} 页 · 单价 ¥${(id * 9) % 200 + 20}</div></div>`;
+    }
+    return html;
+  }
+
+  // 初始加载
+  list.innerHTML = renderItems();
+
+  // —— 下拉刷新：监听 touch，仅在顶部时触发 ——
+  let startY = 0, pulling = false, refreshing = false;
+  viewport.addEventListener('touchstart', e => {
+    if (viewport.scrollTop <= 0 && !refreshing) { startY = e.touches[0].clientY; pulling = true; }
+  }, { passive: true });
+  viewport.addEventListener('touchmove', e => {
+    if (!pulling || refreshing) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0 && viewport.scrollTop <= 0) {
+      indicator.classList.add('show');
+      indicator.textContent = dy > 60 ? '↑ 释放立即刷新' : '↓ 下拉刷新';
+      indicator.dataset.dy = dy;
+    }
+  }, { passive: true });
+  viewport.addEventListener('touchend', () => {
+    if (!pulling || refreshing) return;
+    pulling = false;
+    const dy = +indicator.dataset.dy || 0;
+    if (dy > 60) {
+      refreshing = true;
+      indicator.classList.add('loading');
+      indicator.textContent = '🔄 刷新中…';
+      setTimeout(() => {
+        page = 1; list.innerHTML = renderItems();
+        refreshing = false;
+        indicator.classList.remove('show', 'loading');
+        indicator.textContent = '↓ 下拉刷新';
+        viewport.scrollTop = 0;
+      }, 800);
+    } else {
+      indicator.classList.remove('show');
+    }
+  });
+
+  // —— 上拉加载：触底加载下一页 ——
+  let loadingMore = false;
+  viewport.addEventListener('scroll', () => {
+    if (loadingMore) return;
+    if (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 30) {
+      loadingMore = true;
+      tip.textContent = '加载中…';
+      setTimeout(() => {
+        page++;
+        list.insertAdjacentHTML('beforeend', renderItems());
+        tip.textContent = '上拉加载更多';
+        loadingMore = false;
+      }, 500);
+    }
+  }, { passive: true });
+</script>
+</body>
+</html>

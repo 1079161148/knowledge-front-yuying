@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · 富文本编辑器（痛点拆解）</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
+  .bar { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .bar button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+  .bar button:hover { border-color: #58a6ff; }
+  #editor { min-height: 180px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; outline: none; font-size: 14px; line-height: 1.6; }
+  #editor:focus { border-color: #58a6ff; }
+  .out { margin-top: 10px; font-size: 12px; }
+  .out textarea { width: 100%; height: 90px; background: #0d1117; color: #7ee787; border: 1px solid #30363d; border-radius: 6px; padding: 8px; font-family: monospace; font-size: 11px; }
+  .warn { background: #f8514922; color: #ff7b72; padding: 8px; border-radius: 6px; font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>富文本编辑器（纯 contenteditable 演示）</h3>
+  <div class="tip">真实难点：<b>contenteditable 的坑</b>——光标乱跳、粘贴带脏样式、回车产生 &lt;div&gt; 还是 &lt;p&gt;、"全选删除"后块结构崩溃、XSS。生产用 ProseMirror / Slate / Lexical / TipTap。</div>
+  <div class="bar">
+    <button data-cmd="bold"><b>B</b></button>
+    <button data-cmd="italic"><i>I</i></button>
+    <button data-cmd="insertUnorderedList">• 列表</button>
+    <button id="clean">清除脏样式</button>
+    <button id="xss">模拟粘贴带脚本</button>
+  </div>
+  <div id="editor" contenteditable="true"><p>在这里输入，试试<b>加粗</b>、<i>斜体</i>、列表。</p><p>第二个段落。</p></div>
+  <div class="out">HTML 输出（实时同步）：<textarea id="html" readonly></textarea></div>
+  <div class="warn" id="warn" style="display:none"></div>
+</div>
+<script>
+const editor = document.getElementById('editor');
+const html = document.getElementById('html');
+const warn = document.getElementById('warn');
+document.querySelectorAll('.bar button[data-cmd]').forEach(b => {
+  b.addEventListener('mousedown', e => e.preventDefault()); // 关键：保光标
+  b.addEventListener('click', () => document.execCommand(b.dataset.cmd, false, null) || sync());
+});
+function sync(){ html.value = editor.innerHTML; }
+editor.addEventListener('input', sync); sync();
+
+document.getElementById('clean').addEventListener('click', () => {
+  // 难点：execCommand 已废弃，且无法清除内联 style。生产要在 paste 时 sanitize。
+  editor.innerHTML = editor.innerHTML.replace(/ style="[^"]*"/g, '');
+  sync();
+  warn.style.display = 'block';
+  warn.textContent = '⚠ 已移除内联 style，但真正的 XSS 防护必须在"保存/渲染"时做 DOMPurify 过滤，前端 HTML 输出绝不能直出 innerHTML！';
+});
+document.getElementById('xss').addEventListener('click', () => {
+  // 演示：直接插脚本字符串不会执行（因为不是 script 元素执行），但 <img onerror> 会！
+  editor.innerHTML += '<img src=x onerror="alert(\'XSS!\')">';
+  sync();
+  warn.style.display = 'block';
+  warn.textContent = '⚠ 粘贴内容含 <img onerror> 会在渲染时执行！必须用 DOMPurify.sanitize() 过滤 on* 属性与 script。这是富文本第一安全红线。';
+});
+</script>
+</body>
+</html>

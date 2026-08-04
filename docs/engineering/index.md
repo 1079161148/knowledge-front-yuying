@@ -1,220 +1,75 @@
-# 🛠️ 工程化篇
+# 🛠️ 工程化篇 · 总览
 
-> 从"写页面"到"交付项目"的关键一跃。涵盖包管理、构建、模块化、规范、Monorepo 与 CI/CD。
-
----
-
-## 1. 包管理器对比：pnpm / npm / yarn
-
-**结论（推荐）**：新项目首选 **pnpm**（快、省磁盘、严格依赖隔离）。
-
-=== "pnpm（推荐）"
-    ```bash
-    pnpm install            # 安装依赖
-    pnpm add vue            # 添加生产依赖
-    pnpm add -D vite        # 添加开发依赖
-    pnpm dlx create-vite    # 临时执行脚手架
-    ```
-
-=== "npm"
-    ```bash
-    npm install
-    npm install vue
-    npm install -D vite
-    npx create-vite
-    ```
-
-=== "yarn"
-    ```bash
-    yarn install
-    yarn add vue
-    yarn add -D vite
-    yarn create vite
-    ```
-
-| 维度 | pnpm | npm | yarn |
-|------|------|-----|------|
-| 安装速度 | ⚡ 最快 | 中 | 快 |
-| 磁盘占用 | 硬链接共享 | 各自复制 | 各自复制 |
-| 依赖隔离 | 严格（默认） | 扁平（易 phantom 依赖） | 扁平 |
-| 工作区 | ✅ 原生 | ✅ | ✅ |
+> 工程化 = 把"软件工程的方法与工具"用到前端，让多人协作、长期维护、稳定交付成为可能。本篇是入口，下面拆成 **12 个细分章节**，从"构建工具 → 模块化 → 组件化 → 版本控制 → CI/CD → 规范 → 测试 → 性能 → 工具链 → Monorepo → 文档环境"全链路覆盖。
+>
+> 权威来源与社区最佳实践：[Vite 官方文档](https://vitejs.dev/guide/)、[Webpack 官方文档](https://webpack.js.org/concepts/)、[pnpm 官方文档](https://pnpm.io/)、[Git 官方文档](https://git-scm.com/doc)、[GitHub Actions 文档](https://docs.github.com/actions)、[ESLint 文档](https://eslint.org/docs/latest/)、[Vitest 文档](https://vitest.dev/)、[Conventional Commits](https://www.conventionalcommits.org/)。
 
 ---
 
-## 2. 构建工具对比：Vite / Webpack / esbuild / Rspack
+## 一、工程化到底管什么（10 个方面）
 
-=== "Vite（主流）"
-    ```js
-    // vite.config.js
-    import { defineConfig } from 'vite'
-    import vue from '@vitejs/plugin-vue'
-    export default defineConfig({
-      plugins: [vue()],
-      server: { port: 5173 },
-    })
-    ```
-
-=== "Webpack（老项目）"
-    ```js
-    // webpack.config.js
-    const path = require('path')
-    module.exports = {
-      entry: './src/main.js',
-      output: { path: path.resolve(__dirname, 'dist'), filename: 'bundle.js' },
-      module: { rules: [{ test: /\.vue$/, use: 'vue-loader' }] },
-    }
-    ```
-
-=== "esbuild（极速转译）"
-    ```bash
-    esbuild src/main.ts --bundle --outfile=dist/out.js --loader:.ts=ts
-    ```
-
-=== "Rspack（Webpack 兼容・快）"
-    ```js
-    // rspack.config.js（API 与 Webpack 高度一致）
-    const { defineConfig } = require('@rspack/cli')
-    module.exports = defineConfig({ entry: './src/main.js' })
-    ```
-
-| 工具 | 定位 | 冷启动 | 生产构建 |
-|------|------|--------|----------|
-| Vite | 现代开发/构建 | ⚡ 极快（ESM 原生） | ⚡（Rollup） |
-| Webpack | 老牌全功能 | 慢 | 中 |
-| esbuild | 转译/压缩 | ⚡⚡ 最快 | 仅转译 |
-| Rspack | Webpack 替代 | 快 | 快 |
-
-### 可运行 Demo：浏览器原生 ESM
-
-现代浏览器原生支持 ES Module，无需打包即可 `import`：
-
-<iframe src="demos/engineering-esm.html" width="100%" height="160" style="border:1px solid #2c5364;border-radius:8px"></iframe>
+| # | 方面 | 解决的核心问题 | 对应细分章节 |
+|---|------|----------------|--------------|
+| 1 | 项目构建工具 | 把源码转成浏览器能跑的产物 | [构建工具](build-tools/index.md) |
+| 2 | 模块化开发 | 代码拆分/聚合、依赖管理 | [模块化](modularization/index.md) |
+| 3 | 组件化开发 | UI 拆成可复用单元、样式隔离 | [组件化](componentization/index.md) |
+| 4 | 版本控制 | 协作、回溯、分支管理 | [版本控制](version-control/index.md) |
+| 5 | CI/CD | 自动构建/测试/部署 | [CI/CD](cicd/index.md) |
+| 6 | 静态代码分析 | 质量、格式、提交规范 | [静态代码分析](code-quality/index.md) |
+| 7 | 单元测试/集成测试 | 回归防护、重构安全 | [测试](testing/index.md) |
+| 8 | 性能优化 | 加载快、交互流畅 | [性能优化](performance/index.md) |
+| 9 | JS/CSS 工具链 | 语法增强、兼容、原子化 | [JS 工具链](js-toolchain/index.md) · [CSS 工具链](css-toolchain/index.md) |
+| 10 | 依赖管理与 Monorepo | 多包仓库、依赖治理 | [Monorepo](monorepo/index.md) |
+| + | 文档生成与环境变量 | 可维护性、配置安全 | [文档与环境](docs-and-env/index.md) |
 
 ---
 
-## 3. 模块化：ESM / CJS / 模块联邦
+## 二、选型速览（新版推荐）
 
-=== "ESM（浏览器 / 现代 Node）"
-    ```js
-    // math.js
-    export const add = (a, b) => a + b
-    // main.js
-    import { add } from './math.js'
-    ```
-
-=== "CJS（传统 Node）"
-    ```js
-    // math.js
-    module.exports = { add: (a, b) => a + b }
-    // main.js
-    const { add } = require('./math.js')
-    ```
-
-!!! info "模块联邦（Module Federation）"
-    微前端场景下，多个独立构建的应用可"运行时共享模块"。Vite 用 `@module-federation/vite`，Webpack 5 原生支持。适合大型团队协作的中台项目。
+| 层 | 推荐选型 | 说明 |
+|----|----------|------|
+| 包管理 | **pnpm** | 快、省磁盘、严格依赖隔离 |
+| 构建（新项目） | **Vite** | 原生 ESM 开发服务器 + Rollup 生产构建 |
+| 构建（老/兼容 Webpack） | **Rspack** | Webpack 配置兼容，Rust 提速 |
+| 转译加速 | **esbuild** / **SWC** | 替代 Babel 慢路径 |
+| 规范 | ESLint + Prettier + Stylelint + Commitlint + Husky | 质量 + 格式 + 提交 + 钩子 |
+| 测试 | **Vitest**（单元）+ **Playwright**（E2E） | 与 Vite 同源、快 |
+| 仓库组织 | pnpm workspace + Turborepo / Nx | 任务编排 + 缓存 |
+| 流水线 | GitHub Actions / GitLab CI | 免费、生态全 |
 
 ---
 
-## 4. 代码规范：ESLint / Prettier / Stylelint / Commitlint
+## 三、新人学习路径建议
 
-=== "ESLint 基础"
-    ```js
-    // .eslintrc.cjs
-    module.exports = {
-      root: true,
-      extends: ['eslint:recommended'],
-      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
-    }
-    ```
-
-=== "Prettier（格式化）"
-    ```json
-    // .prettierrc
-    { "semi": false, "singleQuote": true, "printWidth": 80 }
-    ```
-
-=== "Commitlint（提交规范）"
-    ```json
-    // commitlint.config.js
-    { "extends": ["@commitlint/config-conventional"] }
-    // 提交示例： feat: 新增组合式 API 示例
-    ```
-
-| 工具 | 作用 |
-|------|------|
-| ESLint | 代码质量 / 潜在错误 |
-| Prettier | 统一格式（不打架，配合 eslint-config-prettier） |
-| Stylelint | CSS / SCSS 规范 |
-| Commitlint | Git 提交信息规范（Conventional Commits） |
+1. 先懂 [模块化](modularization/index.md) 和 [构建工具](build-tools/index.md) 的"为什么"，再选工具不迷糊。
+2. 把 [静态代码分析](code-quality/index.md) 一次性配好，长期收益最大。
+3. 用 [版本控制](version-control/index.md) 的规范工作流协作。
+4. 上 [CI/CD](cicd/index.md) 让每次 push 自动检查。
+5. 用 [测试](testing/index.md) 守住核心逻辑，用 [性能优化](performance/index.md) 守住体验。
 
 ---
 
-## 5. Monorepo：pnpm workspace / Turborepo / Nx
+## 四、常见坑（总览级）
 
-=== "pnpm workspace"
-    ```yaml
-    # pnpm-workspace.yaml
-    packages:
-      - 'packages/*'
-      - 'apps/*'
-    ```
-    ```bash
-    pnpm -F web dev      # 仅运行 web 包
-    pnpm -r build        # 递归构建所有包
-    ```
-
-!!! tip "Turborepo / Nx"
-    在 pnpm workspace 之上提供**任务编排与缓存**（如 `turbo run build --filter=web`），避免重复构建，大型仓库提速明显。
+!!! warning "工程化反面教材"
+    - **工具堆砌**：不是工具越多越好，按团队规模渐进引入。
+    - **phantom 依赖**：npm/yarn 扁平化下能 import 未声明包；pnpm 严格隔离会直接报错（这是好事）。
+    - **ESLint 与 Prettier 打架**：务必加 `eslint-config-prettier`。
+    - **Node 版本漂移**：`package.json` 写 `engines` + `.nvmrc` 锁版本。
 
 ---
 
-## 6. CI/CD（GitHub Actions 示例）
+## 五、细而全章节地图（建议按顺序读）
 
-```yaml
-# .github/workflows/ci.yml
-name: CI
-on: [push]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - run: pnpm install
-      - run: pnpm build
-```
-
----
-
-## 7. 踩坑（注意事项）
-
-!!! warning "常见坑"
-    - **phantom 依赖**：npm/yarn 扁平化下能 `import` 未声明的包；pnpm 严格隔离会在运行时直接报错（这是好事，逼你显式声明）。
-    - **Vite 与 Webpack 混用**：老项目迁移别一次性全切，先用 Vite 跑 dev、Webpack 跑 build 过渡。
-    - **ESLint 与 Prettier 冲突**：务必加 `eslint-config-prettier` 关闭格式化规则，只让 Prettier 管格式。
-    - **Node 版本**：`package.json` 写好 `engines` 与 `.nvmrc`，避免团队协作版本不一致。
-
----
-
-## 8. 学习经验
-
-!!! tip "经验"
-    - 工程化不是"越多工具越好"，按团队规模渐进引入。
-    - 先搞懂 ESM 与打包的"为什么"，再选 Vite/Webpack 才不迷糊。
-    - 把规范（ESLint/Prettier/Commitlint）一次性配好，长期收益巨大。
-
----
-
-## 9. 总结
-
-| 层 | 推荐选型 |
-|----|----------|
-| 包管理 | pnpm |
-| 构建（新） | Vite |
-| 构建（老） | Webpack / Rspack |
-| 转译加速 | esbuild |
-| 规范 | ESLint + Prettier + Stylelint + Commitlint |
-| 仓库组织 | pnpm workspace + Turborepo |
-| 流水线 | GitHub Actions |
-
-> 下一板块预告：**全栈框架实战**（Node / NestJS / Next.js / Nuxt.js）。
+- [项目构建工具](build-tools/index.md) — Webpack / Vite / Rspack / Turbopack 原理与配置
+- [模块化开发](modularization/index.md) — ESM / CJS / AMD / UMD + 模块联邦 + 代码分割
+- [组件化开发](componentization/index.md) — 设计原则 / 原子设计 / 受控 / 样式隔离
+- [版本控制](version-control/index.md) — Git 工作流 / 分支模型 / rebase / 撤改
+- [CI/CD](cicd/index.md) — GitHub Actions / GitLab CI / 缓存 / 产物 / 部署
+- [静态代码分析](code-quality/index.md) — ESLint / Prettier / Stylelint / Commitlint / Husky
+- [测试](testing/index.md) — Vitest / Jest / Playwright / 覆盖率
+- [性能优化](performance/index.md) — Core Web Vitals / 构建期 / 运行时
+- [JS 工具链](js-toolchain/index.md) — Babel / core-js / browserslist / TS 编译
+- [CSS 工具链](css-toolchain/index.md) — PostCSS / Tailwind / 原子化 / Scoped
+- [Monorepo 与依赖管理](monorepo/index.md) — pnpm workspace / Turbo / Nx
+- [文档生成与环境变量](docs-and-env/index.md) — JSDoc / Storybook / .env

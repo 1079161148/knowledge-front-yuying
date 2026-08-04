@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC 实战 · 复杂动态表单</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; padding: 16px; background: #0f1419; color: #e6edf3; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
+    .tip { color: #7d8590; font-size: 12px; margin-bottom: 12px; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .item { display: grid; grid-template-columns: 1fr 1fr 90px 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
+    input, select { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; padding: 6px 8px; border-radius: 6px; font-size: 13px; }
+    input.err { border-color: #f85149; }
+    .del { background: #21262d; color: #f85149; border: 1px solid #30363d; border-radius: 6px; cursor: pointer; height: 30px; }
+    button.add { background: #238636; color: #fff; border: 0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; margin-right: 8px; }
+    button.submit { background: #1f6feb; color: #fff; border: 0; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .errmsg { color: #f85149; font-size: 12px; min-height: 16px; margin-top: 6px; }
+    .ok { color: #3fb950; font-size: 13px; }
+    label { font-size: 12px; color: #7d8590; display: block; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <h3>订单录入 · 动态增删行 + 跨字段联动校验</h3>
+  <div class="tip">真实中后台最高频痛点：行可增删、单价×数量=小计自动算、整单金额联动、提交时逐行校验（数量必填、单价&gt;0、不能超过库存）。</div>
+
+  <div class="card">
+    <label>客户名称</label>
+    <input id="cust" placeholder="必填" style="width:240px" />
+  </div>
+
+  <div class="card" id="rows"></div>
+  <button class="add" id="add">+ 添加商品行</button>
+  <div style="margin-top:12px">
+    <strong>合计金额：¥<span id="total">0.00</span></strong>
+    <button class="submit" id="submit" style="margin-left:16px">提交订单</button>
+  </div>
+  <div class="errmsg" id="msg"></div>
+
+  <script>
+    const rowsEl = document.getElementById('rows');
+    const STOCK = 999;
+    let seq = 0;
+
+    function addRow() {
+      seq++;
+      const row = document.createElement('div');
+      row.className = 'item';
+      row.dataset.id = seq;
+      row.innerHTML = `
+        <input class="name" placeholder="商品名" />
+        <input class="price" type="number" placeholder="单价" />
+        <input class="qty" type="number" placeholder="数量" value="1" />
+        <button class="del">✕</button>`;
+      row.querySelector('.price').addEventListener('input', recalc);
+      row.querySelector('.qty').addEventListener('input', recalc);
+      row.querySelector('.del').addEventListener('click', () => { row.remove(); recalc(); });
+      rowsEl.appendChild(row);
+      recalc();
+    }
+
+    function recalc() {
+      let total = 0;
+      rowsEl.querySelectorAll('.item').forEach(row => {
+        const p = parseFloat(row.querySelector('.price').value) || 0;
+        const q = parseFloat(row.querySelector('.qty').value) || 0;
+        total += p * q;
+        // 联动：小计显示在 title
+        row.title = '小计 ¥' + (p * q).toFixed(2);
+      });
+      document.getElementById('total').textContent = total.toFixed(2);
+    }
+
+    document.getElementById('add').addEventListener('click', addRow);
+
+    document.getElementById('submit').addEventListener('click', () => {
+      const msg = document.getElementById('msg');
+      msg.className = 'errmsg';
+      msg.textContent = '';
+      rowsEl.querySelectorAll('.item').forEach(r => r.querySelectorAll('input').forEach(i => i.classList.remove('err')));
+
+      const cust = document.getElementById('cust').value.trim();
+      let errors = [];
+      if (!cust) errors.push('客户名称必填');
+
+      const items = [];
+      rowsEl.querySelectorAll('.item').forEach((row, idx) => {
+        const name = row.querySelector('.name').value.trim();
+        const price = parseFloat(row.querySelector('.price').value);
+        const qty = parseInt(row.querySelector('.qty').value);
+        if (!name) { row.querySelector('.name').classList.add('err'); errors.push(`第${idx + 1}行 商品名必填`); }
+        if (!(price > 0)) { row.querySelector('.price').classList.add('err'); errors.push(`第${idx + 1}行 单价必须大于0`); }
+        if (!(qty > 0)) { row.querySelector('.qty').classList.add('err'); errors.push(`第${idx +1}行 数量必须大于0`); }
+        if (qty > STOCK) { row.querySelector('.qty').classList.add('err'); errors.push(`第${idx +1}行 数量超过库存${STOCK}`); }
+        else items.push({ name, price, qty });
+      });
+
+      if (items.length === 0) errors.push('至少添加一行商品');
+
+      if (errors.length) { msg.textContent = '✗ ' + errors.join('；'); return; }
+      msg.className = 'ok';
+      msg.textContent = '✓ 校验通过，提交 ' + items.length + ' 项，合计 ¥' + document.getElementById('total').textContent;
+    });
+
+    addRow(); addRow();
+  </script>
+</body>
+</html>

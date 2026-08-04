@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 实战 · 可编辑树形表格</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border: 1px solid #30363d; padding: 6px 10px; text-align: left; }
+  th { background: #161b22; color: #7ee787; }
+  tr.child { background: #11161d; }
+  .toggle { cursor: pointer; user-select: none; color: #58a6ff; }
+  td input { width: 100%; background: #0d1117; color: #e6edf3; border: 1px solid #30363d; border-radius: 4px; padding: 3px 6px; font-size: 12px; }
+  td input:focus { border-color: #58a6ff; outline: none; }
+  .bar { margin-top: 10px; font-size: 12px; color: #8b949e; }
+  .bar button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 5px 10px; cursor: pointer; margin-right: 6px; }
+  .total { color: #e3b341; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>可编辑树形表格（部门预算填报）</h3>
+  <div class="tip">真实难点：树形展开/收起、父行汇总=子行之和（双向校验）、可编辑单元格失焦保存、虚拟滚动下树结构如何渲染。生产用 el-table-v2 的树形 + 自定义合计行。</div>
+  <table id="t">
+    <thead><tr><th style="width:40px"></th><th>部门 / 科目</th><th>预算(万)</th><th>实际(万)</th><th>备注</th></tr></thead>
+    <tbody id="body"></tbody>
+  </table>
+  <div class="bar">
+    <button id="add">+ 子科目</button>
+    <span>父行预算 = 子行之和（改子行自动汇总父行）。<span class="total" id="sum"></span></span>
+  </div>
+</div>
+<script>
+let seq = 0;
+const rows = [
+  { id: 1, name: '技术中心', budget: 0, actual: 0, note: '', parent: null, open: true, kids: [
+    { id: 2, name: '前端组', budget: 30, actual: 22, note: 'HC 4', parent: 1 },
+    { id: 3, name: '后端组', budget: 50, actual: 41, note: 'HC 6', parent: 1 },
+    { id: 4, name: '测试组', budget: 20, actual: 18, note: 'HC 3', parent: 1 },
+  ]},
+  { id: 5, name: '市场中心', budget: 0, actual: 0, note: '', parent: null, open: true, kids: [
+    { id: 6, name: '品牌', budget: 40, actual: 33, note: '', parent: 5 },
+    { id: 7, name: '投放', budget: 60, actual: 55, note: '', parent: 5 },
+  ]},
+];
+function flatten() {
+  const out = [];
+  const walk = (list, depth) => list.forEach(r => { r._depth = depth; out.push(r); if (r.kids && r.open) walk(r.kids, depth+1); });
+  walk(rows, 0); return out;
+}
+function recompute() {
+  rows.forEach(root => { root.budget = root.kids.reduce((s,k)=>s+(+k.budget||0),0); root.actual = root.kids.reduce((s,k)=>s+(+k.actual||0),0); });
+}
+const body = document.getElementById('body');
+const sumEl = document.getElementById('sum');
+function render() {
+  body.innerHTML = '';
+  flatten().forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.parent) tr.className = 'child';
+    const hasKids = r.kids && r.kids.length;
+    tr.innerHTML = `
+      <td>${hasKids ? `<span class="toggle" data-id="${r.id}">${r.open?'▾':'▸'}</span>` : ''}</td>
+      <td style="padding-left:${8 + (r._depth||0)*18}px">${r.name}${hasKids?' <span style="color:#8b949e">(${r.kids.length})</span>':''}</td>
+      <td><input data-id="${r.id}" data-f="budget" value="${r.budget}"></td>
+      <td><input data-id="${r.id}" data-f="actual" value="${r.actual}"></td>
+      <td><input data-id="${r.id}" data-f="note" value="${r.note||''}" placeholder="备注"></td>`;
+    body.appendChild(tr);
+  });
+  recompute();
+  sumEl.textContent = `技术中心预算合计 ${rows[0].budget}万 / 市场中心 ${rows[1].budget}万`;
+  bind();
+}
+function find(id){ let f; const w = l => l.forEach(r => { if(r.id==id) f=r; if(r.kids) w(r.kids); }); w(rows); return f; }
+function bind() {
+  document.querySelectorAll('.toggle').forEach(t => t.onclick = () => { find(+t.dataset.id).open = !find(+t.dataset.id).open; render(); });
+  document.querySelectorAll('#body input').forEach(inp => inp.oninput = () => {
+    const r = find(+inp.dataset.id); r[inp.dataset.f] = inp.dataset.f==='note' ? inp.value : (+inp.value||0);
+    if (r.parent) recompute();
+    if (inp.dataset.f!=='note') { // 父行汇总实时刷新（只更新父行单元格，避免光标丢失）
+      const pr = find(r.parent); const cell = document.querySelector(`#body input[data-id="${pr.id}"][data-f="budget"]`);
+      if (cell && document.activeElement!==cell) cell.value = pr.budget;
+      const cell2 = document.querySelector(`#body input[data-id="${pr.id}"][data-f="actual"]`);
+      if (cell2 && document.activeElement!==cell2) cell2.value = pr.actual;
+      sumEl.textContent = `技术中心预算合计 ${rows[0].budget}万 / 市场中心 ${rows[1].budget}万`;
+    }
+  });
+}
+document.getElementById('add').onclick = () => { const root = rows[0]; root.kids.push({ id: ++seq+10, name: '新科目'+((seq)+1), budget: 0, actual: 0, note:'', parent: root.id }); root.open=true; render(); };
+render();
+</script>
+</body>
+</html>

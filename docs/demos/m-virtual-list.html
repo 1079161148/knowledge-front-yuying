@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端虚拟长列表</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .app { max-width: 420px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+  header { padding: 12px 16px; background: #161b22; border-bottom: 1px solid #30363d; }
+  header h1 { font-size: 16px; }
+  header .stat { font-size: 12px; color: #8b949e; margin-top: 4px; }
+  /* 可视容器：定高 + 滚动 */
+  .viewport { flex: 1; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; }
+  /* 占位内层：撑出真实滚动高度 */
+  .phantom { position: relative; width: 100%; }
+  .row {
+    position: absolute; left: 0; right: 0; height: 56px;
+    display: flex; align-items: center; padding: 0 16px;
+    border-bottom: 1px solid #21262d;
+  }
+  .row .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#58a6ff,#bc8cff); flex: none; }
+  .row .meta { margin-left: 12px; flex: 1; min-width: 0; }
+  .row .name { font-size: 14px; font-weight: 600; }
+  .row .sub { font-size: 12px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .amt { font-size: 14px; color: #3fb950; font-variant-numeric: tabular-nums; }
+  .loading { text-align: center; padding: 12px; color: #8b949e; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>💬 聊天会话列表（1 万条）</h1>
+    <div class="stat" id="stat">DOM 节点数：仅渲染可视区约 12 行</div>
+  </header>
+  <div class="viewport" id="viewport">
+    <div class="phantom" id="phantom">
+      <div class="loading" id="loading">下拉到底自动加载更多…</div>
+    </div>
+  </div>
+</div>
+<script>
+  const ROW_H = 56;          // 固定行高
+  const OVERSCAN = 4;        // 上下缓冲行
+  const viewport = document.getElementById('viewport');
+  const phantom = document.getElementById('phantom');
+  const stat = document.getElementById('stat');
+
+  let total = 10000;         // 已存在数据量
+  let start = 0, end = 0;
+  const pool = [];           // DOM 复用池
+
+  // 生成一行数据
+  const NAMES = ['张伟','王芳','李娜','刘洋','陈静','杨磊','赵敏','黄强','周婷','吴昊'];
+  function makeItem(i) {
+    const name = NAMES[i % NAMES.length] + (i > NAMES.length ? i : '');
+    return { id: i, name, sub: '最后一条消息：' + (i % 3 === 0 ? '在的，马上处理' : '收到，已转发') + ' #' + i, amt: '¥' + ((i * 37) % 900 + 10) };
+  }
+
+  function render() {
+    const scrollTop = viewport.scrollTop;
+    const h = viewport.clientHeight;
+    start = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
+    end = Math.min(total, Math.ceil((scrollTop + h) / ROW_H) + OVERSCAN);
+
+    phantom.style.height = (total * ROW_H) + 'px';
+
+    // 复用 DOM：保证 pool 里至少有 (end-start) 个节点
+    const need = end - start;
+    while (pool.length < need) {
+      const el = document.createElement('div');
+      el.className = 'row';
+      phantom.appendChild(el);
+      pool.push(el);
+    }
+    for (let k = 0; k < pool.length; k++) {
+      const el = pool[k];
+      const idx = start + k;
+      if (k < need) {
+        const it = makeItem(idx);
+        el.style.display = 'flex';
+        el.style.transform = `translateY(${idx * ROW_H}px)`;
+        el.innerHTML = `<div class="avatar"></div>
+          <div class="meta"><div class="name">${it.name}</div><div class="sub">${it.sub}</div></div>
+          <div class="amt">${it.amt}</div>`;
+      } else {
+        el.style.display = 'none';
+      }
+    }
+    stat.textContent = `DOM 节点数：${pool.length}（总 ${total} 条，只渲染可视区）`;
+  }
+
+  // 无限加载：触底拉下一批
+  let loading = false;
+  viewport.addEventListener('scroll', () => {
+    window.requestAnimationFrame(render);
+    if (!loading && viewport.scrollTop + viewport.clientHeight > total * ROW_H - ROW_H * 6) {
+      loading = true;
+      setTimeout(() => { total += 2000; loading = false; render(); }, 400); // 模拟接口
+    }
+  }, { passive: true });
+
+  render();
+</script>
+</body>
+</html>

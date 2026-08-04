@@ -144,4 +144,6 @@ const { data } = await useFetch('/api/hello')
 | React 全栈 | Next.js | App Router 为主 |
 | Vue 全栈 | Nuxt 3 | 文件路由 + 自动 API |
 
+> 真实生产骨架 → [Next.js 真实项目结构](nextjs-real-project.md)：流式渲染、Server Actions、以及把 AI 聊天嵌进全栈项目。
+
 > 下一板块预告：**HTML5 / CSS3**（语义化、Flex/Grid、动画、响应式、新特性）。

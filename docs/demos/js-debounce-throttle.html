@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>防抖 vs 节流 可视化</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d161d; color: #e0f7fa; padding: 1rem; margin: 0; }
+    h4 { color: #00e5ff; margin: .2rem 0 .8rem; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .card { flex: 1; min-width: 240px; background: #111b24; border: 1px solid #2c5364; border-radius: 8px; padding: .8rem; }
+    .card h5 { margin: 0 0 .4rem; color: #7c4dff; }
+    .target { width: 100%; height: 56px; border-radius: 6px; background: #203a43; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; user-select: none; cursor: pointer; transition: transform .08s; }
+    .target:active { transform: scale(.97); }
+    .bar { height: 6px; background: #00e5ff; border-radius: 3px; margin-top: .5rem; transition: width .2s; }
+    .log { margin-top: .6rem; background: #203a43; border-radius: 6px; padding: .5rem; height: 110px; overflow-y: auto; font-size: .82rem; white-space: pre-wrap; line-height: 1.5; }
+    label { font-size: .85rem; display: block; margin-top: .6rem; }
+    input[type=range] { width: 100%; }
+    button.clear { margin-top: .5rem; padding: .3rem .8rem; border: none; border-radius: 6px; background: #2c5364; color: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h4>防抖（debounce）vs 节流（throttle）可视化</h4>
+  <label>等待时间 wait：<span id="waitVal">500</span> ms
+    <input id="wait" type="range" min="100" max="1500" step="100" value="500" />
+  </label>
+  <div class="row">
+    <div class="card">
+      <h5>防抖：停止触发后等 wait 才执行</h5>
+      <div class="target" id="dbTarget">点我 / 狂点</div>
+      <div class="bar" id="dbBar"></div>
+      <div class="log" id="dbLog">日志：</div>
+    </div>
+    <div class="card">
+      <h5>节流：每 wait 最多执行一次</h5>
+      <div class="target" id="thTarget">点我 / 狂点</div>
+      <div class="bar" id="thBar"></div>
+      <div class="log" id="thLog">日志：</div>
+    </div>
+  </div>
+  <button class="clear" onclick="clearAll()">清空日志</button>
+
+  <script>
+    const waitEl = document.getElementById('wait')
+    const waitVal = document.getElementById('waitVal')
+    let wait = 500
+    waitEl.addEventListener('input', e => { wait = +e.target.value; waitVal.textContent = wait })
+
+    function debounce(fn, w) {
+      let t
+      return function (...a) {
+        clearTimeout(t)
+        t = setTimeout(() => fn.apply(this, a), w)
+      }
+    }
+    function throttle(fn, w) {
+      let last = 0, timer = null
+      return function (...a) {
+        const now = Date.now()
+        const remain = w - (now - last)
+        if (remain <= 0) {
+          clearTimeout(timer); timer = null
+          last = now; fn.apply(this, a)
+        } else if (!timer) {
+          timer = setTimeout(() => { last = Date.now(); timer = null; fn.apply(this, a) }, remain)
+        }
+      }
+    }
+
+    function pulse(bar) {
+      bar.style.width = '100%'
+      setTimeout(() => bar.style.width = '0%', 180)
+    }
+
+    let dbCount = 0, thCount = 0
+    const dbLog = document.getElementById('dbLog')
+    const thLog = document.getElementById('thLog')
+    const dbBar = document.getElementById('dbBar')
+    const thBar = document.getElementById('thBar')
+
+    const debounced = debounce(() => {
+      dbCount++
+      dbLog.textContent += '\n执行#' + dbCount + ' @' + new Date().toLocaleTimeString()
+      pulse(dbBar)
+    }, wait)
+    const throttled = throttle(() => {
+      thCount++
+      thLog.textContent += '\n执行#' + thCount + ' @' + new Date().toLocaleTimeString()
+      pulse(thBar)
+    }, wait)
+
+    document.getElementById('dbTarget').addEventListener('click', () => { dbLog.textContent += '\n点击'; dbLog.scrollTop = dbLog.scrollHeight; debounced() })
+    document.getElementById('thTarget').addEventListener('click', () => { thLog.textContent += '\n点击'; thLog.scrollTop = thLog.scrollHeight; throttled() })
+
+    function clearAll() { dbLog.textContent = '日志：'; thLog.textContent = '日志：'; dbCount = 0; thCount = 0 }
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>事件循环动画</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d161d; color: #e0f7fa; padding: 1rem; margin: 0; }
+    h4 { color: #00e5ff; margin: .2rem 0 .8rem; }
+    .layout { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 200px; background: #111b24; border: 1px solid #2c5364; border-radius: 8px; padding: .8rem; }
+    .col h5 { margin: 0 0 .4rem; }
+    .stack { min-height: 260px; }
+    .item { background: #203a43; border-left: 3px solid #00e5ff; border-radius: 4px; padding: .35rem .5rem; margin-bottom: .35rem; font-size: .82rem; animation: in .2s ease; }
+    .item.micro { border-left-color: #7c4dff; }
+    .item.macro { border-left-color: #ffb74d; }
+    .item.run { background: #2c5364; box-shadow: 0 0 8px #00e5ff; }
+    @keyframes in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; } }
+    .controls { margin-top: .8rem; }
+    button { padding: .35rem .9rem; border: none; border-radius: 6px; background: #2c5364; color: #fff; cursor: pointer; margin-right: .4rem; }
+    button.primary { background: #00e5ff; color: #00222a; font-weight: 600; }
+    .console { background: #000; border-radius: 6px; padding: .5rem; height: 200px; overflow-y: auto; font-size: .82rem; white-space: pre-wrap; line-height: 1.5; }
+    .legend span { display: inline-block; margin-right: 1rem; font-size: .8rem; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: .3rem; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <h4>事件循环（Event Loop）可视化：同步 → 清空微任务 → 宏任务</h4>
+  <div class="legend">
+    <span><i class="dot" style="background:#00e5ff"></i>同步/调用栈</span>
+    <span><i class="dot" style="background:#7c4dff"></i>微任务队列</span>
+    <span><i class="dot" style="background:#ffb74d"></i>宏任务队列</span>
+  </div>
+  <div class="layout">
+    <div class="col">
+      <h5 style="color:#00e5ff">调用栈 Call Stack</h5>
+      <div class="stack" id="stack"></div>
+    </div>
+    <div class="col">
+      <h5 style="color:#7c4dff">微任务 Microtask</h5>
+      <div class="stack" id="micro"></div>
+      <h5 style="color:#ffb74d; margin-top:.6rem">宏任务 Macrotask</h5>
+      <div class="stack" id="macro"></div>
+    </div>
+    <div class="col">
+      <h5 style="color:#00e5ff">控制台输出</h5>
+      <div class="console" id="console"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="primary" onclick="run()">▶ 运行示例</button>
+    <button onclick="reset()">↺ 重置</button>
+  </div>
+
+  <script>
+    const stackEl = document.getElementById('stack')
+    const microEl = document.getElementById('micro')
+    const macroEl = document.getElementById('macro')
+    const consoleEl = document.getElementById('console')
+    let timer = []
+
+    function reset() {
+      timer.forEach(clearTimeout); timer = []
+      stackEl.innerHTML = ''; microEl.innerHTML = ''; macroEl.innerHTML = ''; consoleEl.textContent = ''
+    }
+    function add(el, cls, text) {
+      const d = document.createElement('div')
+      d.className = 'item ' + cls; d.textContent = text
+      el.appendChild(d); return d
+    }
+    function run() {
+      reset()
+      const steps = [
+        () => { const d = add(stackEl, '', 'console.log("1")'); consoleEl.textContent += '1\n'; mark(d); },
+        () => { const d = add(stackEl, '', 'setTimeout(2)'); add(macroEl, 'macro', 'timeout → 2'); mark(d); },
+        () => { const d = add(stackEl, '', 'Promise.resolve().then(3)'); add(microEl, 'micro', 'promise → 3'); mark(d); },
+        () => { const d = add(stackEl, '', 'console.log("4")'); consoleEl.textContent += '4\n'; mark(d); },
+        () => consoleEl.textContent += '\n— 清空微任务 —\n',
+        () => { const d = add(stackEl, 'micro', 'then → 3'); consoleEl.textContent += '3\n'; mark(d); microEl.innerHTML = ''; },
+        () => consoleEl.textContent += '\n— 取下一个宏任务 —\n',
+        () => { const d = add(stackEl, 'macro', 'timeout → 2'); consoleEl.textContent += '2\n'; mark(d); macroEl.innerHTML = ''; },
+      ]
+      let t = 0
+      steps.forEach((fn, i) => { timer.push(setTimeout(fn, t)); t += 900 })
+    }
+    function mark(d) {
+      d.classList.add('run')
+      setTimeout(() => { d.classList.remove('run'); d.remove(); }, 600)
+    }
+  </script>
+</body>
+</html>

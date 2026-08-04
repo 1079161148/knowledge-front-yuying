@@ -1,0 +1,18 @@
+{
+  "name": "knowledge-front-yuying",
+  "version": "1.0.0",
+  "private": true,
+  "description": "鱼樱前端+AI知识库：前端 demo 框架依赖由 npm 管理，构建脚本拷贝到 vendor",
+  "scripts": {
+    "postinstall": "node scripts/copy-vendor.mjs",
+    "vendor:sync": "node scripts/copy-vendor.mjs",
+    "build": "npm run vendor:sync && mkdocs build"
+  },
+  "dependencies": {
+    "vue": "3.5.40",
+    "vue2": "npm:vue@2.7.16",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@babel/standalone": "8.0.4"
+  }
+}

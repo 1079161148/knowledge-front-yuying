@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS 渲染机制 Demo</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  padding: 1rem;
+  margin: 0;
+  color: #e0f7fa;
+  background: #0d161d;
+  font-size: .85rem;
+  line-height: 1.4;
+}
+h2 {
+  color: #4fc3f7;
+  font-size: 1.1rem;
+  margin: .8rem 0 .4rem;
+  border-bottom: 1px solid #2c5364;
+  padding-bottom: .2rem;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-bottom: .4rem;
+}
+.card {
+  flex: 1 1 240px;
+  background: #182a35;
+  border-radius: 6px;
+  padding: .7rem;
+  border: 1px solid #2c5364;
+}
+.card h3 { margin: 0 0 .4rem; font-size: .8rem; color: #81c784; }
+.label { color: #90a4ae; font-size: .72rem; }
+code { background: #203a43; padding: .05rem .25rem; border-radius: 3px; font-size: .78rem; }
+
+/* --- 示例 1：层叠优先级 --- */
+.cas-base  { color: white; background: #37474f; padding: .2rem .5rem; border-radius: 4px; }
+.cas-class { color: red; }   /* class > element */
+.cas-id    { color: green; }  /* id > class */
+.cas-impt  { color: cyan; }
+
+/* --- 示例 2：继承 --- */
+.inherit-parent { color: #ffb74d; font-size: .9rem; border: 2px solid #ffb74d; padding: .2rem .5rem; border-radius: 4px; }
+.inherit-child  { /* 空规则，继承 color/font-size，不继承 border */ }
+
+/* --- 示例 3：盒模型 --- */
+.content-box { box-sizing: content-box; width: 100px; padding: 15px; border: 4px solid #ef5350; background: #3e2723; color: #ffcdd2; border-radius: 4px; text-align: center; }
+.border-box  { box-sizing: border-box;  width: 100px; padding: 15px; border: 4px solid #81c784; background: #1b3a2d; color: #c8e6c9; border-radius: 4px; text-align: center; }
+
+/* --- 示例 4：margin 塌陷 --- */
+.mar-parent { background: #263238; border-radius: 4px; }
+.mar-child1 { margin-bottom: 20px; background: #37474f; padding: .2rem .5rem; border-radius: 3px; }
+.mar-child2 { margin-top: 15px; background: #455a64; padding: .2rem .5rem; border-radius: 3px; }
+
+.bfc-wrapper { overflow: hidden; background: #1b3a2d; border-radius: 4px; padding: 0 .3rem; border: 1px dashed #4caf50; }
+.bfc-wrapper .mar-child1, .bfc-wrapper .mar-child2 { background: #2e5a40; }
+
+/* --- 示例 5：BFC 隔离浮动 --- */
+.float-left { float: left; width: 80px; height: 36px; background: #ef5350; color: #fff; text-align: center; line-height: 36px; border-radius: 4px; font-size: .7rem; }
+.bfc-right { overflow: hidden; background: #1b3a2d; padding: .3rem .5rem; border-radius: 4px; min-height: 36px; }
+
+/* --- 示例 6：层叠上下文 --- */
+.stack-wrapper { position: relative; height: 80px; background: #263238; border-radius: 4px; overflow: visible; }
+.stack-a { position: absolute; top: 5px; left: 5px; width: 100px; height: 35px; background: #ef5350; color: #fff; text-align: center; line-height: 35px; border-radius: 4px; z-index: 2; font-size: .75rem; }
+.stack-b { position: absolute; top: 5px; left: 50px; width: 100px; height: 35px; background: #42a5f5; color: #fff; text-align: center; line-height: 35px; border-radius: 4px; z-index: 1; font-size: .75rem; }
+
+.ctx-parent { position: relative; z-index: 1; border: 2px solid #ffb74d; border-radius: 4px; padding: .3rem; margin-top: .3rem; height: 55px; }
+.ctx-child { position: absolute; top: 8px; left: 40px; width: 100px; height: 30px; background: #4fc3f7; color: #1a1a2e; text-align: center; line-height: 30px; border-radius: 4px; z-index: 999; font-size: .75rem; font-weight: 700; }
+.ctx-outside { position: relative; width: 100px; height: 30px; background: #ef5350; color: #fff; text-align: center; line-height: 30px; border-radius: 4px; z-index: 2; font-size: .75rem; margin-top: .3rem; }
+</style>
+</head>
+<body>
+
+<h2>1. 层叠优先级（Specificity）</h2>
+<div class="row">
+  <div class="card">
+    <h3>优先级规则</h3>
+    <p><span class="cas-base cas-class cas-id">元素 (.cas-base) → class (.cas-class) → id (.cas-id)</span></p>
+    <p style="color:#ce93d8"><code style="color:#ce93d8">内联 style=""</code> 优先级最高 (1,0,0,0)</p>
+    <p style="color:#00e5ff"><code style="color:#00e5ff">!important</code> 凌驾所有层级</p>
+    <p class="label">计算：class=0,0,1,0 &nbsp; id=0,1,0,0 &nbsp; inline=1,0,0,0</p>
+  </div>
+</div>
+
+<h2>2. 继承</h2>
+<div class="row">
+  <div class="card">
+    <h3>父元素设 color + border</h3>
+    <div class="inherit-parent">
+      我是父元素（color=橙，border=橙）
+      <div class="inherit-child">→ 我是子元素（继承橙色文字，但 border 不继承）</div>
+    </div>
+    <p class="label" style="margin-top:.3rem">color 可继承 / border 不可继承</p>
+  </div>
+  <div class="card">
+    <h3>控制继承的关键字</h3>
+    <p><code style="color:#ffb74d">inherit</code> 强制继承父元素</p>
+    <p><code style="color:#ffb74d">initial</code> 重置为属性初始值</p>
+    <p><code style="color:#ffb74d">unset</code> 可继承=inherit，不可继承=initial</p>
+    <p><code style="color:#ffb74d">revert</code> 回退到浏览器默认</p>
+  </div>
+</div>
+
+<h2>3. 盒模型：content-box vs border-box</h2>
+<div class="row">
+  <div class="card">
+    <h3>content-box（默认）</h3>
+    <p><code>width: 100px; padding: 15px; border: 4px</code></p>
+    <div class="content-box">100px</div>
+    <p class="label">实际宽度 = 100+15×2+4×2 = <b>138px</b></p>
+  </div>
+  <div class="card">
+    <h3>border-box（推荐）</h3>
+    <p><code>width: 100px; padding: 15px; border: 4px</code></p>
+    <div class="border-box">100px</div>
+    <p class="label">实际宽度 = <b>100px</b>（padding/border 内含）</p>
+  </div>
+</div>
+
+<h2>4. Margin 塌陷</h2>
+<div class="row">
+  <div class="card">
+    <h3>普通容器（塌陷发生）</h3>
+    <p>mb=20 + mt=15 = ?</p>
+    <div class="mar-parent">
+      <div class="mar-child1">上 margin-bottom: 20px</div>
+      <div class="mar-child2">下 margin-top: 15px</div>
+    </div>
+    <p class="label">间距 = max(20, 15) = <b>20px</b>（塌陷合并！）</p>
+  </div>
+  <div class="card">
+    <h3>BFC 容器（不塌陷）</h3>
+    <p>overflow: hidden → 触发 BFC</p>
+    <div class="bfc-wrapper">
+      <div class="mar-child1">上 margin-bottom: 20px</div>
+      <div class="mar-child2">下 margin-top: 15px</div>
+    </div>
+    <p class="label">BFC 隔离后不会塌陷到外部</p>
+  </div>
+</div>
+
+<h2>5. BFC：清除浮动 & 两栏布局</h2>
+<div class="row">
+  <div class="card">
+    <h3>右栏 overflow: hidden → BFC</h3>
+    <div>
+      <div class="float-left">float: left</div>
+      <div class="bfc-right">BFC 右栏：不环绕 float，自动撑开形成两栏。这是最经典的自适应布局方案。</div>
+    </div>
+  </div>
+</div>
+
+<h2>6. 层叠上下文与 z-index</h2>
+<div class="row">
+  <div class="card">
+    <h3>同层级叠上下文内比较</h3>
+    <div class="stack-wrapper">
+      <div class="stack-a">z-index: 2</div>
+      <div class="stack-b">z-index: 1</div>
+    </div>
+    <p class="label">红色 z=2 > 蓝色 z=1 → 红色在上面 ✓</p>
+  </div>
+  <div class="card">
+    <h3>不同上下文中：z=999 被 z=2 遮挡</h3>
+    <div class="ctx-parent">
+      <span class="label">父级上下文 z=1</span>
+      <div class="ctx-child">z-index: 999</div>
+    </div>
+    <div class="ctx-outside">z-index: 2（外部）</div>
+    <p class="label">子级 999 在父级 z=1 上下文中；外部 z=2 > 1 → 外部在上 ✗</p>
+  </div>
+</div>
+
+</body>
+</html>

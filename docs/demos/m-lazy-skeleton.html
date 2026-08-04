@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端实战 · 图片懒加载 + 骨架屏</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+  h3 { font-size: 15px; margin: 4px 0; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; line-height: 1.5; }
+  .list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+  .thumb { width: 100%; aspect-ratio: 1; background: #21262d; object-fit: cover; display: block; }
+  /* 骨架屏：渐变流光 */
+  .skeleton { background: linear-gradient(100deg, #21262d 30%, #2d333b 50%, #21262d 70%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .card .meta { padding: 8px 10px; font-size: 12px; color: #8b949e; }
+  .card .meta b { color: #e6edf3; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>图片懒加载 + 骨架屏</h3>
+  <div class="tip">真实难点：① 用 IntersectionObserver 懒加载，data-src 拦截；② 加载前显示骨架屏占位防抖动（aspect-ratio 预留高度，避免 CLS 布局偏移扣分）；③ 懒加载失败要重试/占位图；④ 弱网下骨架屏超时降级。</div>
+  <div class="list" id="list"></div>
+</div>
+<script>
+const list = document.getElementById('list');
+const palette = ['#1f6feb','#3fb950','#f85149','#d29922','#a371f7','#db61a2'];
+const data = Array.from({length: 12}, (_, i) => ({ id: i, title: '作品 '+(i+1), price: (i*13%900)+9, c: palette[i%palette.length] }));
+const frag = document.createDocumentFragment();
+data.forEach(d => {
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `
+    <div class="thumb skeleton" data-c="${d.c}"></div>
+    <div class="meta"><b>${d.title}</b><br>￥${d.price}</div>`;
+  frag.appendChild(card);
+});
+list.appendChild(frag);
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    const el = en.target;
+    const box = el;
+    const thumb = box.querySelector('.thumb');
+    io.unobserve(el);
+    // 模拟图片异步加载（真实用 new Image() 加载 data-src）
+    setTimeout(() => {
+      const c = thumb.dataset.c;
+      thumb.style.background = `linear-gradient(135deg, ${c}, ${c}88)`;
+      thumb.textContent = ''; thumb.classList.remove('skeleton');
+      // 真实场景：thumb.innerHTML = `<img src="${realUrl}" loading="lazy">`
+    }, 500 + Math.random()*900);
+  });
+}, { rootMargin: '200px' });
+document.querySelectorAll('.card').forEach(c => io.observe(c));
+</script>
+</body>
+</html>

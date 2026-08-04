@@ -46,24 +46,31 @@
     }
     ```
 
-### 可运行 Demo：逻辑复用（Vue 3 composable）
-
-<iframe src="demos/advanced-composable.html" width="100%" height="220" style="border:1px solid #2c5364;border-radius:8px"></iframe>
+!!! example "可运行 Demo：逻辑复用（Vue 3 composable）"
+    <iframe src="../../demos/advanced-composable.html" width="100%" height="220" style="border:1px solid #2c5364;border-radius:8px"></iframe>
 
 ---
 
-## 2. 渲染机制 / 虚拟 DOM / Diff
+## 2. 渲染机制、虚拟 DOM 与 Diff
 
 **概念**：框架不直接操作真实 DOM，而是维护一棵 **虚拟 DOM**（JS 对象树）。状态变化后生成新树，与旧树做 **Diff**，仅把最小差异 **Patch** 到真实 DOM，从而提升性能。
 
-```mermaid
-flowchart TD
-  S[状态变更] --> V[生成新的虚拟 DOM]
-  V --> D[Diff 算法比对新旧树]
-  D --> P[计算出最小更新补丁]
-  P --> U[更新真实 DOM]
-  U --> R[视图更新]
-```
+<div class="flow-chart" style="
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;
+  font-size:.85rem;font-weight:500;padding:12px 0;
+">
+  <div style="background:var(--md-code-bg-color);border:1px solid var(--md-accent-fg-color);border-radius:6px;padding:6px 14px;">状态变更</div>
+  <span style="color:var(--md-accent-fg-color);font-size:1.2rem;">→</span>
+  <div style="background:var(--md-code-bg-color);border:1px solid var(--md-accent-fg-color);border-radius:6px;padding:6px 14px;">生成虚拟 DOM</div>
+  <span style="color:var(--md-accent-fg-color);font-size:1.2rem;">→</span>
+  <div style="background:var(--md-code-bg-color);border:1px solid var(--md-accent-fg-color);border-radius:6px;padding:6px 14px;">Diff 新旧树</div>
+  <span style="color:var(--md-accent-fg-color);font-size:1.2rem;">→</span>
+  <div style="background:var(--md-code-bg-color);border:1px solid var(--md-accent-fg-color);border-radius:6px;padding:6px 14px;">计算最小补丁</div>
+  <span style="color:var(--md-accent-fg-color);font-size:1.2rem;">→</span>
+  <div style="background:var(--md-code-bg-color);border:1px solid var(--md-accent-fg-color);border-radius:6px;padding:6px 14px;">更新真实 DOM</div>
+  <span style="color:var(--md-accent-fg-color);font-size:1.2rem;">→</span>
+  <div style="background:var(--md-accent-fg-color);color:#1a1a2e;border-radius:6px;padding:6px 14px;font-weight:700;">视图更新</div>
+</div>
 
 === "Vue 3 (patch)"
     ```js
@@ -185,5 +192,7 @@ flowchart TD
 | 更新机制 | patch / 响应式追踪 | Fiber reconcile / 不可变 |
 | 性能 | v-memo / shallowRef | memo / useMemo |
 | 全栈渲染 | Nuxt 3 | Next.js |
+
+> 深入底层 → [响应式原理深入（Vue2/3/React）](reactivity-deep.md)：把"更新机制"拆到 `defineProperty` / `Proxy` / 不可变重渲染。
 
 > 下一板块预告：**工程化**（包管理 / 构建工具 / 模块化 / 代码规范 / Monorepo / CI）。

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>待办列表 · 三框架对比</title>
+  <link rel="stylesheet" href="../assets/vendor/framework-demo.css" />
+  <script src="vendor/vue2.js"></script>
+  <script>window.Vue2 = window.Vue;</script>
+  <script src="vendor/vue3.global.js"></script>
+  <script>window.Vue3 = window.Vue;</script>
+  <script src="vendor/react.production.min.js"></script>
+  <script src="vendor/react-dom.production.min.js"></script>
+  <script src="vendor/babel.min.js"></script>
+  <script src="../assets/vendor/framework-demo.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const vue3Code =
+`<script setup>
+import { ref } from 'vue'
+const todos = ref([{ id: 1, text: '学 Vue 3', done: false }])
+const text = ref('')
+let uid = 2
+function add() {
+  const v = text.value.trim()
+  if (!v) return
+  todos.value.push({ id: uid++, text: v, done: false })
+  text.value = ''
+}
+function toggle(t) { t.done = !t.done }
+function remove(id) { todos.value = todos.value.filter(t => t.id !== id) }
+<\/script>
+
+<template>
+  <input v-model="text" @keyup.enter="add" placeholder="输入待办后回车" />
+  <button @click="add">添加</button>
+  <ul>
+    <li v-for="t in todos" :key="t.id">
+      <input type="checkbox" v-model="t.done" @change="toggle(t)" />
+      <span :style="{ textDecoration: t.done ? 'line-through' : 'none' }">{{ t.text }}</span>
+      <button @click="remove(t.id)">删除</button>
+    </li>
+  </ul>
+<\/template>`;
+
+    const vue2Code =
+`<template>
+  <input v-model="text" @keyup.enter="add" placeholder="输入待办后回车" />
+  <button @click="add">添加</button>
+  <ul>
+    <li v-for="t in todos" :key="t.id">
+      <input type="checkbox" v-model="t.done" />
+      <span :style="{ textDecoration: t.done ? 'line-through' : 'none' }">{{ t.text }}</span>
+      <button @click="remove(t.id)">删除</button>
+    </li>
+  </ul>
+</template>
+<script>
+export default {
+  data() {
+    return { todos: [{ id: 1, text: '学 Vue 2', done: false }], text: '', uid: 2 }
+  },
+  methods: {
+    add() {
+      const v = this.text.trim()
+      if (!v) return
+      this.todos.push({ id: this.uid++, text: v, done: false })
+      this.text = ''
+    },
+    remove(id) { this.todos = this.todos.filter(t => t.id !== id) }
+  }
+}
+<\/script>`;
+
+    const reactCode =
+`import { useState } from 'react'
+export default function TodoApp() {
+  const [todos, setTodos] = useState([{ id: 1, text: '学 React', done: false }])
+  const [text, setText] = useState('')
+  let uid = 2
+  function add() {
+    const v = text.trim()
+    if (!v) return
+    setTodos(t => [...t, { id: uid++, text: v, done: false }])
+    setText('')
+  }
+  function toggle(id) {
+    setTodos(t => t.map(x => x.id === id ? { ...x, done: !x.done } : x))
+  }
+  function remove(id) { setTodos(t => t.filter(x => x.id !== id)) }
+  return (
+    <div>
+      <input value={text} onChange={e => setText(e.target.value)}
+             onKeyDown={e => e.key === 'Enter' && add()} placeholder="输入待办后回车" />
+      <button onClick={add}>添加</button>
+      <ul>
+        {todos.map(t => (
+          <li key={t.id}>
+            <input type="checkbox" checked={t.done} onChange={() => toggle(t.id)} />
+            <span style={{ textDecoration: t.done ? 'line-through' : 'none' }}>{t.text}</span>
+            <button onClick={() => remove(t.id)}>删除</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}`;
+
+    FrameworkDemo(document.getElementById('app'), [
+      {
+        label: 'Vue 3',
+        code: vue3Code,
+        mount: function (el) {
+          const app = Vue3.createApp({
+            template: '<div><input v-model="text" @keyup.enter="add" placeholder="输入待办后回车" /><button @click="add">添加</button><ul><li v-for="t in todos" :key="t.id"><input type="checkbox" :checked="t.done" @change="toggle(t)" /><span :style="{textDecoration:t.done?\'line-through\':\'none\'}">{{t.text}}</span><button @click="remove(t.id)">删除</button></li></ul></div>',
+            setup() {
+              const { ref } = Vue3;
+              const todos = ref([{ id: 1, text: '学 Vue 3', done: false }]);
+              const text = ref('');
+              let uid = 2;
+              function add() {
+                const v = text.value.trim();
+                if (!v) return;
+                todos.value.push({ id: uid++, text: v, done: false });
+                text.value = '';
+              }
+              function toggle(t) { t.done = !t.done; }
+              function remove(id) { todos.value = todos.value.filter(t => t.id !== id); }
+              return { todos, text, add, toggle, remove };
+            }
+          });
+          app.mount(el);
+          return function () { app.unmount(); };
+        }
+      },
+      {
+        label: 'Vue 2',
+        code: vue2Code,
+        mount: function (el) {
+          const vm = new Vue2({
+            el: el,
+            template: '<div><input v-model="text" @keyup.enter="add" placeholder="输入待办后回车" /><button @click="add">添加</button><ul><li v-for="t in todos" :key="t.id"><input type="checkbox" v-model="t.done" /><span :style="{textDecoration:t.done?\'line-through\':\'none\'}">{{t.text}}</span><button @click="remove(t.id)">删除</button></li></ul></div>',
+            data() { return { todos: [{ id: 1, text: '学 Vue 2', done: false }], text: '', uid: 2 }; },
+            methods: {
+              add() {
+                const v = this.text.trim();
+                if (!v) return;
+                this.todos.push({ id: this.uid++, text: v, done: false });
+                this.text = '';
+              },
+              remove(id) { this.todos = this.todos.filter(t => t.id !== id); }
+            }
+          });
+          return function () { vm.$destroy(); };
+        }
+      },
+      {
+        label: 'React',
+        code: reactCode,
+        mount: function (el) {
+          const src =
+`function App(){
+  const [todos, setTodos] = React.useState([{ id: 1, text: '学 React', done: false }]);
+  const [text, setText] = React.useState('');
+  let uid = 2;
+  function add() {
+    const v = text.trim();
+    if (!v) return;
+    setTodos(t => [...t, { id: uid++, text: v, done: false }]);
+    setText('');
+  }
+  function toggle(id) { setTodos(t => t.map(x => x.id === id ? { ...x, done: !x.done } : x)); }
+  function remove(id) { setTodos(t => t.filter(x => x.id !== id)); }
+  return (
+    <div>
+      <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="输入待办后回车" />
+      <button onClick={add}>添加</button>
+      <ul>
+        {todos.map(t => (
+          <li key={t.id}>
+            <input type="checkbox" checked={t.done} onChange={() => toggle(t.id)} />
+            <span style={{ textDecoration: t.done ? 'line-through' : 'none' }}>{t.text}</span>
+            <button onClick={() => remove(t.id)}>删除</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}`;
+          const out = Babel.transform(src, { presets: [['react', { runtime: 'classic' }]] }).code;
+          const holder = { v: null };
+          new Function('React', 'ReactDOM', 'el', 'h',
+            out + '\n;h.v = ReactDOM.createRoot(el); h.v.render(React.createElement(App));'
+          )(React, ReactDOM, el, holder);
+          return function () { if (holder.v) holder.v.unmount(); };
+        }
+      }
+    ]);
+  </script>
+</body>
+</html>

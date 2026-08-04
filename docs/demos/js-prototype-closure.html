@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>原型链 / 闭包 / 手写题 互动</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d161d; color: #e0f7fa; padding: 1rem; margin: 0; }
+    h4 { color: #00e5ff; margin: .2rem 0 .8rem; }
+    .card { background: #111b24; border: 1px solid #2c5364; border-radius: 8px; padding: .8rem; margin-bottom: 1rem; }
+    .card h5 { margin: 0 0 .4rem; color: #7c4dff; }
+    button { padding: .35rem .9rem; border: none; border-radius: 6px; background: #2c5364; color: #fff; cursor: pointer; margin-right: .4rem; }
+    pre { background: #203a43; border-radius: 6px; padding: .6rem; font-size: .85rem; line-height: 1.5; white-space: pre-wrap; }
+    .tree { font-size: .85rem; line-height: 1.7; }
+    .tree .node { color: #00e5ff; }
+    .tree .arrow { color: #7c4dff; }
+  </style>
+</head>
+<body>
+  <h4>原型链 / 闭包 / 手写题 互动演示</h4>
+
+  <div class="card">
+    <h5>① 原型链查找（点按钮看 p.say 从哪来）</h5>
+    <button onclick="showProto()">查看 p.say 的原型链</button>
+    <div class="tree" id="protoOut"></div>
+  </div>
+
+  <div class="card">
+    <h5>② 闭包计数器（验证捕获的是变量不是值）</h5>
+    <button onclick="c1()">counter() +1</button>
+    <button onclick="c2()">再建一个 counter() +1</button>
+    <pre id="cloOut">点击上方按钮...</pre>
+  </div>
+
+  <div class="card">
+    <h5>③ 手写深拷贝（含循环引用）</h5>
+    <button onclick="runClone()">运行 deepClone</button>
+    <pre id="cloneOut"></pre>
+  </div>
+
+  <script>
+    // ① 原型链
+    function Person(name) { this.name = name }
+    Person.prototype.say = function () { return this.name }
+    const p = new Person('鱼樱')
+    function showProto() {
+      const out = document.getElementById('protoOut')
+      out.innerHTML =
+        '<div><span class="node">p</span> <span class="arrow">→</span> 自身属性: name="鱼樱"</div>' +
+        '<div><span class="node">p.__proto__ === Person.prototype</span> <span class="arrow">→</span> 找到 say()</div>' +
+        '<div><span class="node">Person.prototype.__proto__ === Object.prototype</span> <span class="arrow">→</span> toString/hasOwnProperty...</div>' +
+        '<div><span class="node">Object.prototype.__proto__</span> <span class="arrow">→</span> null（链顶）</div>' +
+        '<div style="margin-top:.4rem">p.say() 结果: <b>' + p.say() + '</b>（自身没有，沿链向上找到）</div>'
+    }
+
+    // ② 闭包
+    function makeCounter() {
+      let count = 0
+      return () => ++count
+    }
+    const counterA = makeCounter()
+    const counterB = makeCounter()
+    function c1() {
+      document.getElementById('cloOut').textContent =
+        'counterA() = ' + counterA() + '\ncounterB() = ' + counterB() +
+        '\n（两个计数器各自持有独立的 count 绑定）'
+    }
+    function c2() {
+      document.getElementById('cloOut').textContent =
+        'counterA() = ' + counterA() + '\ncounterB() = ' + counterB() +
+        '\n（各自独立，互不干扰 → 证明闭包捕获的是变量绑定）'
+    }
+
+    // ③ 深拷贝
+    function deepClone(obj, map = new WeakMap()) {
+      if (obj === null || typeof obj !== 'object') return obj
+      if (obj instanceof Date) return new Date(obj)
+      if (obj instanceof RegExp) return new RegExp(obj)
+      if (map.has(obj)) return map.get(obj)
+      const res = Array.isArray(obj) ? [] : {}
+      map.set(obj, res)
+      Reflect.ownKeys(obj).forEach(k => res[k] = deepClone(obj[k], map))
+      return res
+    }
+    function runClone() {
+      const a = { x: 1, nested: { y: 2 } }
+      a.self = a // 循环引用
+      const b = deepClone(a)
+      b.nested.y = 999
+      document.getElementById('cloneOut').textContent =
+        '原对象 a.nested.y = ' + a.nested.y + '（未变）\n' +
+        '拷贝对象 b.nested.y = ' + b.nested.y + '（改成999）\n' +
+        '循环引用 self 处理: ' + (b.self === b ? '成功（无栈溢出）' : '失败')
+    }
+  </script>
+</body>
+</html>

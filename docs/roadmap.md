@@ -35,12 +35,12 @@ flowchart LR
 
 | 阶段 | 主题 | 核心交付物 |
 |------|------|-----------|
-| 0 | HTML5 / CSS3 | 语义化页面、响应式布局 |
+| 0 | 环境搭建 + HTML5 / CSS3 | [新手第一课](getting-started/quickstart.md) 装好工具并跑通第一个网页 |
 | 1 | JavaScript + TypeScript | 语言基础、类型系统 |
 | 2 | Vue2 / Vue3 / React | 框架对比、组件化思维 |
 | 3 | 包管理 / 构建 / 模块化 | Vite/Webpack、ESM、规范 |
-| 4 | Next / Nuxt / Nest / Node | 全栈项目实战 |
-| 5 | AI 前端 / 面试 | LLM 接入、真题演练 |
+| 4 | Next / Nuxt / Nest / Node / Java | 全栈项目实战 + [从零到部署教程](deployment/index.md) |
+| 5 | AI 前端 / 面试 / 部署上线 | LLM 接入、真题演练、项目上线 |
 
 ---
 
@@ -53,7 +53,14 @@ flowchart LR
 - 技术栈决策（见 `tech-stack/`）
 - 环境搭建记录（见 `setup/`）
 
-### 📌 1. 基础语法（框架对比）
+### 📌 1. HTML5 / CSS3
+- 语义化标签
+- Flex / Grid 布局
+- 动画与过渡
+- 响应式与媒体查询
+- 新特性（自定义元素、Web Components 等）
+
+### 📌 2. 基础语法（框架对比）
 - 响应式与数据绑定
 - 组件与 Props
 - 条件 / 列表渲染
@@ -61,15 +68,21 @@ flowchart LR
 - 生命周期
 - 状态管理
 
-### 📌 2. 进阶
+### 📌 2.5 语言工程能力（JS/TS 主线）
+- JavaScript 设计模式：发布订阅 / 观察者 / 单例 / 工厂 / 策略 / 代理
+- 数据结构与算法 JS 实现：栈 / 队列 / 链表 / 树 / 排序 / 递归 / DP
+- 正则与错误处理实战
+
+### 📌 3. 进阶
 - 组合式 API vs Options API
 - React Hooks
-- 渲染机制 / 虚拟 DOM / Diff
+- 渲染机制、虚拟 DOM 与 Diff
+- 浏览器原理深化：URL→渲染、DNS、TCP/HTTPS、HTTP 缓存、HTTP/2-3
 - 性能优化
 - TypeScript 深入
 - SSR / SSG
 
-### 📌 3. 工程化
+### 📌 4. 工程化
 - 包管理器对比：pnpm / npm / yarn
 - 构建工具对比：Vite / Webpack / esbuild / Rspack
 - 模块化：ESM / CJS / 模块联邦
@@ -77,18 +90,11 @@ flowchart LR
 - Monorepo：pnpm workspace / Turborepo / Nx
 - CI/CD
 
-### 📌 4. 全栈框架实战
+### 📌 5. 全栈框架实战
 - Node 基础
 - NestJS 实战
 - Next.js（App Router / Pages Router）
 - Nuxt.js（Vue3）
-
-### 📌 5. HTML5 / CSS3
-- 语义化标签
-- Flex / Grid 布局
-- 动画与过渡
-- 响应式与媒体查询
-- 新特性（自定义元素、Web Components 等）
 
 ### 📌 6. AI 前端领域（最新）
 - AI 辅助编码工作流

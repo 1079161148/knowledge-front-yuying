@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计数器 · 三框架对比</title>
+  <link rel="stylesheet" href="../assets/vendor/framework-demo.css" />
+  <script src="vendor/vue2.js"></script>
+  <script>window.Vue2 = window.Vue;</script>
+  <script src="vendor/vue3.global.js"></script>
+  <script>window.Vue3 = window.Vue;</script>
+  <script src="vendor/react.production.min.js"></script>
+  <script src="vendor/react-dom.production.min.js"></script>
+  <script src="vendor/babel.min.js"></script>
+  <script src="../assets/vendor/framework-demo.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const vue3Code =
+`<script setup>
+import { ref, computed } from 'vue'
+const count = ref(0)
+const double = computed(() => count.value * 2)
+<\/script>
+
+<template>
+  <button @click="count--">-</button>
+  <span class="big">{{ count }}</span>
+  <button @click="count++">+</button>
+  <p>双倍：{{ double }}</p>
+<\/template>`;
+
+    const vue2Code =
+`<template>
+  <button @click="count--">-</button>
+  <span class="big">{{ count }}</span>
+  <button @click="count++">+</button>
+  <p>双倍：{{ double }}</p>
+</template>
+<script>
+export default {
+  data() { return { count: 0 } },
+  computed: { double() { return this.count * 2 } }
+}
+<\/script>`;
+
+    const reactCode =
+`import { useState } from 'react'
+export default function Counter() {
+  const [count, setCount] = useState(0)
+  return (
+    <>
+      <button onClick={() => setCount(c => c - 1)}>-</button>
+      <span className="big">{count}</span>
+      <button onClick={() => setCount(c => c + 1)}>+</button>
+      <p>双倍：{count * 2}</p>
+    </>
+  )
+}`;
+
+    FrameworkDemo(document.getElementById('app'), [
+      {
+        label: 'Vue 3',
+        code: vue3Code,
+        mount: function (el) {
+          const app = Vue3.createApp({
+            template: '<div><button @click="count--">-</button><span class="big">{{ count }}</span><button @click="count++">+</button><p>双倍：{{ double }}</p></div>',
+            setup() {
+              const { ref, computed } = Vue3;
+              const count = ref(0);
+              const double = computed(() => count.value * 2);
+              return { count, double };
+            }
+          });
+          app.mount(el);
+          return function () { app.unmount(); };
+        }
+      },
+      {
+        label: 'Vue 2',
+        code: vue2Code,
+        mount: function (el) {
+          const vm =           new Vue2({
+            el: el,
+            template: '<div><button @click="count--">-</button><span class="big">{{ count }}</span><button @click="count++">+</button><p>双倍：{{ double }}</p></div>',
+            data() { return { count: 0 }; },
+            computed: { double() { return this.count * 2; } }
+          });
+          return function () { vm.$destroy(); };
+        }
+      },
+      {
+        label: 'React',
+        code: reactCode,
+        mount: function (el) {
+          // 注意：new Function 执行环境不是模块，不能使用 import/export。
+          // 直接用全局 React.useState（与 Vue 的 mount 写法一致），展示源码里的 import 仅作教学。
+          const src =
+`function App(){
+  const [count, setCount] = React.useState(0);
+  return (
+    <>
+      <button onClick={() => setCount(c => c - 1)}>-</button>
+      <span className="big">{count}</span>
+      <button onClick={() => setCount(c => c + 1)}>+</button>
+      <p>双倍：{count * 2}</p>
+    </>
+  );
+}`;
+          const out = Babel.transform(src, { presets: [['react', { runtime: 'classic' }]] }).code;
+          const holder = { v: null };
+          new Function('React', 'ReactDOM', 'el', 'h',
+            out + '\n;h.v = ReactDOM.createRoot(el); h.v.render(React.createElement(App));'
+          )(React, ReactDOM, el, holder);
+          return function () { if (holder.v) holder.v.unmount(); };
+        }
+      }
+    ]);
+  </script>
+</body>
+</html>

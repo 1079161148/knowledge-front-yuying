@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>移动端实战 · 离线缓存（PWA Service Worker）</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0d1117; color: #e6edf3; }
+  .wrap { padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  h3 { font-size: 15px; margin: 4px 0; }
+  .tip { font-size: 12px; color: #8b949e; margin-bottom: 12px; line-height: 1.6; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.7; }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-bottom: 10px; }
+  .b-on { background: #3fb95022; color: #7ee787; } .b-off { background: #f8514922; color: #ff7b72; }
+  code { background: #21262d; padding: 2px 6px; border-radius: 4px; color: #7ee787; font-size: 12px; }
+  button { margin-top: 12px; background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 8px; padding: 8px 14px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>离线缓存（PWA Service Worker）</h3>
+  <div class="tip">真实难点：① SW 必须 HTTPS（localhost 例外）；② 缓存策略选型：precache 壳 + runtime 缓存接口（stale-while-revalidate）；③ 更新时要 skipWaiting + clients.claim 才生效；④ 缓存体积限制（50MB 左右）要设上限清理。</div>
+  <div class="badge b-off" id="badge">SW 未注册（本页为演示，需在真实站点部署 sw.js）</div>
+  <div class="card">
+    <p><b>Service Worker 生命周期</b></p>
+    <p>1. <code>register</code> → 2. <code>install</code> 预缓存 app shell → 3. <code>activate</code> 清理旧缓存 → 4. <code>fetch</code> 拦截请求走缓存策略</p>
+    <p><b>缓存策略对比</b></p>
+    <p>• <b>Cache First</b>：静态资源，快但更新滞后<br>
+       • <b>Network First</b>：接口数据，实时优先、失败兜底缓存<br>
+       • <b>Stale-While-Revalidate</b>：先返缓存、后台更新（最佳体验）</p>
+  </div>
+  <button id="btn">检测当前网络状态</button>
+</div>
+<script>
+const badge = document.getElementById('badge');
+if ('serviceWorker' in navigator) {
+  badge.className = 'badge b-on';
+  badge.textContent = '浏览器支持 Service Worker ✓（部署 sw.js 即可离线）';
+} else {
+  badge.textContent = '当前环境不支持 SW（需 https / localhost）';
+}
+document.getElementById('btn').onclick = () => {
+  alert(navigator.onLine ? '当前在线：走 Network First / SWR 策略' : '当前离线：直接返回 Cache First 缓存内容');
+};
+// 真实 sw.js 示例（部署到站点根目录）：
+// const CACHE='v1'; self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['/','/app.js','/style.css'])));self.skipWaiting();});
+// self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))));self.clients.claim();});
+// self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{const cp=resp.clone();caches.open(CACHE).then(c=>c.put(e.request,cp));return resp;})));});
+</script>
+</body>
+</html>
