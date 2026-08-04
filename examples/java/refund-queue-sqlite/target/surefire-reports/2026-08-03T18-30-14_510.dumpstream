@@ -1,0 +1,5 @@
+# Created at 2026-08-03T18:30:14.613
+Boot Manifest-JAR contains absolute paths in classpath 'E:\knowledge-front-yuying\examples\java\refund-queue-sqlite\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
