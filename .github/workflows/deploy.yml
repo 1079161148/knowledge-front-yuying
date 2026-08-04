@@ -1,22 +1,27 @@
-name: Deploy MkDocs to GitHub Pages
+name: Deploy to all platforms
 
 on:
   push:
     branches:
-      - master          # 推送到 master 分支即自动构建部署
-  workflow_dispatch:    # 允许在 Actions 页面手动触发
+      - master
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 同一时间只允许一个部署，避免并发冲突
 concurrency:
-  group: pages
+  group: deploy
   cancel-in-progress: false
 
+env:
+  # 统一构建命令，供各平台复用（保持与 package.json 的 build:site 一致）
+  BUILD_CMD: "npm ci && npm run vendor:sync && mkdocs build --strict"
+  SITE_DIR: site
+
 jobs:
+  # ---------- 统一构建：只构建一次产物 ----------
   build:
     runs-on: ubuntu-latest
     steps:
@@ -33,33 +38,90 @@ jobs:
       - name: Install MkDocs & dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install "mkdocs-material" \
-                      "pymdown-extensions" \
-                      "mkdocs-minify-plugin"
+          pip install "mkdocs-material" "pymdown-extensions" "mkdocs-minify-plugin"
 
-      - name: Setup Node (for demo vendor sync)
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
 
-      - name: Sync demo vendor assets
-        run: npm run vendor:sync
+      - name: Build site (统一命令)
+        run: npm run build:site
 
-      - name: Build site
-        run: mkdocs build --strict
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: site   # mkdocs 默认输出目录
+          name: site
+          path: ${{ env.SITE_DIR }}
+          if-no-files-found: error
 
-  deploy:
+  # ---------- 1. GitHub Pages ----------
+  deploy-github-pages:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Download site
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: ${{ env.SITE_DIR }}
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # ---------- 2. Cloudflare Pages ----------
+  deploy-cloudflare:
+    needs: build
+    runs-on: ubuntu-latest
+    # 未配置 token 时跳过，不阻断其它平台
+    if: ${{ env.CF_API_TOKEN != '' }}
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      CF_PROJECT_NAME: ${{ secrets.CF_PROJECT_NAME }}
+    steps:
+      - name: Download site
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: ${{ env.SITE_DIR }}
+      - name: Deploy to Cloudflare Pages
+        run: npx --yes wrangler@latest pages deploy ${{ env.SITE_DIR }} --project-name="$CF_PROJECT_NAME" --commit-dirty=true
+
+  # ---------- 3. Vercel ----------
+  deploy-vercel:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ env.VERCEL_TOKEN != '' }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Download site
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: ${{ env.SITE_DIR }}
+      - name: Deploy to Vercel
+        run: npx --yes vercel@latest deploy ${{ env.SITE_DIR }} --prod --token="$VERCEL_TOKEN" --yes
+
+  # ---------- 4. Netlify ----------
+  deploy-netlify:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ env.NETLIFY_AUTH_TOKEN != '' }}
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - name: Download site
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: ${{ env.SITE_DIR }}
+      - name: Deploy to Netlify
+        run: npx --yes netlify-cli@latest deploy --prod --dir=${{ env.SITE_DIR }} --auth="$NETLIFY_AUTH_TOKEN" --site="$NETLIFY_SITE_ID"

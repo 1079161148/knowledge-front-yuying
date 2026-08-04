@@ -6,7 +6,8 @@
   "scripts": {
     "postinstall": "node scripts/copy-vendor.mjs",
     "vendor:sync": "node scripts/copy-vendor.mjs",
-    "build": "npm run vendor:sync && mkdocs build"
+    "build": "npm run vendor:sync && mkdocs build",
+    "build:site": "npm ci && npm run vendor:sync && mkdocs build --strict"
   },
   "dependencies": {
     "vue": "3.5.40",
