@@ -72,14 +72,14 @@ SELECT title FROM knowledge_base WHERE category = 'tutorial'
 | 平台 | 访问地址 | 说明 |
 |------|----------|------|
 | **GitHub Pages** | `https://1079161148.github.io/knowledge-front-yuying/` | 默认已生效，无需额外配置 |
-| **Cloudflare Pages** | `https://<CF_PROJECT_NAME>.pages.dev` | 首次部署自动建站，需 `CF_API_TOKEN` / `CF_ACCOUNT_ID` / `CF_PROJECT_NAME` |
+| **Cloudflare Pages** | `https://<CLOUDFLARE_PROJECT_NAME>.pages.dev` | 首次部署自动建站，需 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_PROJECT_NAME` |
 | **Vercel** | `https://<项目名>.vercel.app` | 需先在 Vercel 建项目，再配置 `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` |
 | **Netlify** | `https://<站点名>.netlify.app` | 只需 `NETLIFY_AUTH_TOKEN`，首次自动建站（`NETLIFY_SITE_ID` 选填） |
 
 ### 配置 Secrets
 在 `Settings → Secrets and variables → Actions → Repository secrets` 中配置（区分大小写，名字需完全一致）：
 
-- `CF_API_TOKEN`、`CF_ACCOUNT_ID`、`CF_PROJECT_NAME`
+- `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_PROJECT_NAME`
 - `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID`
 - `NETLIFY_AUTH_TOKEN`（必填）、`NETLIFY_SITE_ID`（选填，不填则自动建站）
 
