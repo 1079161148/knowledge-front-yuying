@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # 统一构建命令，供各平台复用（保持与 package.json 的 build:site 一致）
+  # 统一构建命令，供各平台复用（与 package.json 的 build:site 一致）
   BUILD_CMD: "npm ci && npm run vendor:sync && mkdocs build --strict"
   SITE_DIR: site
 
@@ -48,19 +48,15 @@ jobs:
       - name: Build site (统一命令)
         run: npm run build:site
 
-      - name: Resolve symlinks in site (GitHub Pages 不支持符号链接)
-        run: |
-          find "$SITE_DIR" -type l | while read -r link; do
-            target=$(readlink -f "$link")
-            rm -f "$link"
-            cp -L "$target" "$link"
-          done
-          echo "剩余符号链接数：$(find "$SITE_DIR" -type l | wc -l)"
+      - name: Upload Pages artifact (自动展开 symlink)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.SITE_DIR }}
 
-      - name: Upload site artifact
+      - name: Upload generic artifact for other platforms
         uses: actions/upload-artifact@v4
         with:
-          name: github-pages
+          name: site-dist
           path: ${{ env.SITE_DIR }}
           if-no-files-found: error
 
@@ -72,11 +68,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download site
-        uses: actions/download-artifact@v4
-        with:
-          name: github-pages
-          path: ${{ env.SITE_DIR }}
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
@@ -93,7 +84,7 @@ jobs:
       - name: Download site
         uses: actions/download-artifact@v4
         with:
-          name: github-pages
+          name: site-dist
           path: ${{ env.SITE_DIR }}
       - name: Deploy to Cloudflare Pages
         if: ${{ env.CF_API_TOKEN != '' }}
@@ -111,7 +102,7 @@ jobs:
       - name: Download site
         uses: actions/download-artifact@v4
         with:
-          name: github-pages
+          name: site-dist
           path: ${{ env.SITE_DIR }}
       - name: Deploy to Vercel
         if: ${{ env.VERCEL_TOKEN != '' }}
@@ -128,7 +119,7 @@ jobs:
       - name: Download site
         uses: actions/download-artifact@v4
         with:
-          name: github-pages
+          name: site-dist
           path: ${{ env.SITE_DIR }}
       - name: Deploy to Netlify
         if: ${{ env.NETLIFY_AUTH_TOKEN != '' }}
