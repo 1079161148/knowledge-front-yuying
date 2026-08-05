@@ -1,10 +1,7 @@
+# 站点由 GitHub Actions 统一构建（mkdocs build），本平台仅上传产物，不自行构建。
+# 请在 Netlify 后台 Build settings 中清空 Build command（保持为空），Publish directory 设为 site。
 [build]
-  command = "npm install && npm run vendor:sync && mkdocs build --strict"
   publish = "site"
-
-[build.environment]
-  PYTHON_VERSION = "3.12"
-  NODE_VERSION = "22"
 
 # SPA 回退（mkdocs 为静态多页，无需，但保留以备子路径）
 [[redirects]]

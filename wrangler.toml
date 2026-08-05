@@ -1,6 +1,5 @@
-# Cloudflare Pages 项目配置（通过 wrangler 或后台 UI 部署）
-# 后台 UI 填写项（等效）：
-#   构建命令: npm install && npm run vendor:sync && mkdocs build --strict
-#   输出目录: site
+# Cloudflare Pages 项目配置（通过 wrangler 部署）
+# 站点由 GitHub Actions 统一构建（mkdocs build）后由工作流上传 site 目录，本平台不自行构建。
+# 若使用 Cloudflare 后台 UI：构建命令直接留空（或填写 `echo skip`），输出目录设为 site。
 name = "knowledge-front-yuying"
 pages_build_output_dir = "site"
