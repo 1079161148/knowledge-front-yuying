@@ -50,8 +50,8 @@
 
 > ⚠️ 方案 B 由各平台**云端自行构建**，云端默认没有 Python/mkdocs 环境，直接填 `mkdocs build`
 > 会报 `127 command not found`（正是此前踩过的坑）。若坚持用方案 B，需在各平台构建命令中先安装
-> Python 依赖，例如：
-> `pip install mkdocs-material pymdown-extensions && npm install && npm run vendor:sync && mkdocs build --strict`
+> Python 依赖（见上方各家 "Build command" 实际写法：
+> `pip install mkdocs-material pymdown-extensions mkdocs-minify-plugin && npm ci && npm run vendor:sync && mkdocs build --strict`）。
 > 推荐优先使用方案 A（由 Actions 统一构建后上传产物，最省心）。
 
 ### 1. Cloudflare Pages（国内速度通常最快最稳）
@@ -60,7 +60,7 @@
 2. 授权并选择仓库 `1079161148/knowledge-front-yuying`
 3. 构建设置：
    - **Framework preset**: `None`
-   - **Build command**: `npm ci && npm run vendor:sync && mkdocs build --strict`
+   - **Build command**: `pip install mkdocs-material pymdown-extensions mkdocs-minify-plugin && npm ci && npm run vendor:sync && mkdocs build --strict`
    - **Build output directory**: `site`
 4. 部署完成后获得 `https://knowledge-front-yuying.pages.dev`
 5. 也可使用 `wrangler.toml`（仓库已提供），通过 `npx wrangler pages deploy site` 手动部署
@@ -70,7 +70,7 @@
 1. 登录 https://vercel.com/ → **Add New** → **Project** → 导入 GitHub 仓库
 2. 构建设置：
    - **Framework Preset**: `Other`
-   - **Build Command**: `npm ci && npm run vendor:sync && mkdocs build --strict`
+   - **Build Command**: `pip install mkdocs-material pymdown-extensions mkdocs-minify-plugin && npm ci && npm run vendor:sync && mkdocs build --strict`
    - **Output Directory**: `site`
 3. 仓库根已包含 `vercel.json`，Vercel 会自动读取
 4. 部署后获得 `https://knowledge-front-yuying.vercel.app`
@@ -79,7 +79,7 @@
 
 1. 登录 https://app.netlify.com/ → **Add new site** → **Import an existing project** → 连接 GitHub
 2. 构建设置：
-   - **Build command**: `npm ci && npm run vendor:sync && mkdocs build --strict`
+   - **Build command**: `pip install mkdocs-material pymdown-extensions mkdocs-minify-plugin && npm ci && npm run vendor:sync && mkdocs build --strict`
    - **Publish directory**: `site`
 3. 仓库根已包含 `netlify.toml`，Netlify 会自动读取
 4. 部署后获得 `https://<随机>.netlify.app`

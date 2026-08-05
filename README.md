@@ -85,6 +85,11 @@ SELECT title FROM knowledge_base WHERE category = 'tutorial'
 
 部署工作流见 `.github/workflows/deploy.yml`，手动触发：`gh workflow run deploy.yml`。
 
+> **也可单独在各平台后台连 GitHub 部署**（方案 B）：在 Cloudflare Pages / Vercel / Netlify 后台「Connect to Git」导入本仓库，
+> 构建命令用 `pip install mkdocs-material pymdown-extensions mkdocs-minify-plugin && npm ci && npm run vendor:sync && mkdocs build --strict`，
+> 产物目录填 `site`。注意云构建环境默认无 Python/mkdocs，务必在命令开头先 `pip install`（否则报 `127`）。
+> 详细步骤见 [`docs/DEPLOY-FREE.md`](docs/DEPLOY-FREE.md)。
+
 ---
 
 ## 🤝 贡献指南
