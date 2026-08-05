@@ -30,6 +30,13 @@
 | Secret 名 | 值是什么 | 去哪拿（精确路径） |
 |-----------|----------|-------------------|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API Token | dash.cloudflare.com → 右上头像 → **My Profile → API Tokens → Create Token** → 选模板 **"Cloudflare Pages:Edit"**（或自定义权限 `Account:Cloudflare Pages:Edit`）→ 复制 Token |
+
+![Cloudflare 创建 Custom Token 示例（Permissions=Account/Cloudflare Pages/Edit）](assets/images/lifecycle/Cloudflare-gf.png){: style="max-width:720px" }
+
+将 Token 复制后，回到 GitHub 仓库 → **Settings → Secrets and variables → Actions → New repository secret**，按上面表格逐条新增以下几项（注意必须放在 **Repository secrets**，不能放 Environment secrets，否则工作流读不到）：
+
+![GitHub Repository secrets 列表示例（CLOUDFLARE_/VERCEL_/NETLIFY_ 全套）](assets/images/lifecycle/Cloudflare-github.png){: style="max-width:720px" }
+
 | `CLOUDFLARE_ACCOUNT_ID` | 账户 ID | dash.cloudflare.com 右侧栏 **"Account ID"**（首页右上，或 My Profile 页）；为 **32 位十六进制**，不要填账户名或邮箱 |
 | `CLOUDFLARE_PROJECT_NAME` | Pages 项目名 | 首次部署由 wrangler 自动创建，项目名即此处填的值（如 `knowledge-front-yuying`，合法字符即可，无需预先建站） |
 | `VERCEL_TOKEN` | Vercel 访问令牌 | vercel.com → 右上头像 → **Settings → Tokens → Create** → 复制 Token |
