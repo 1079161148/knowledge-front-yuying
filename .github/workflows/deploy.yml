@@ -86,8 +86,12 @@ jobs:
         with:
           name: site-dist
           path: ${{ env.SITE_DIR }}
+      - name: Check required secrets
+        run: |
+          if [ -z "$CF_API_TOKEN" ] || [ -z "$CF_ACCOUNT_ID" ] || [ -z "$CF_PROJECT_NAME" ]; then
+            echo "::error::缺少 Cloudflare Secret，请在仓库 Settings → Secrets 配置 CF_API_TOKEN / CF_ACCOUNT_ID / CF_PROJECT_NAME"; exit 1
+          fi
       - name: Deploy to Cloudflare Pages
-        if: ${{ env.CF_API_TOKEN != '' }}
         run: npx --yes wrangler@latest pages deploy ${{ env.SITE_DIR }} --project-name="$CF_PROJECT_NAME" --commit-dirty=true
 
   # ---------- 3. Vercel ----------
@@ -104,8 +108,12 @@ jobs:
         with:
           name: site-dist
           path: ${{ env.SITE_DIR }}
+      - name: Check required secrets
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::error::缺少 Vercel Secret，请在仓库 Settings → Secrets 配置 VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID"; exit 1
+          fi
       - name: Deploy to Vercel
-        if: ${{ env.VERCEL_TOKEN != '' }}
         run: npx --yes vercel@latest deploy ${{ env.SITE_DIR }} --prod --token="$VERCEL_TOKEN" --yes
 
   # ---------- 4. Netlify ----------
@@ -121,6 +129,10 @@ jobs:
         with:
           name: site-dist
           path: ${{ env.SITE_DIR }}
+      - name: Check required secrets
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "::error::缺少 Netlify Secret，请在仓库 Settings → Secrets 配置 NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID"; exit 1
+          fi
       - name: Deploy to Netlify
-        if: ${{ env.NETLIFY_AUTH_TOKEN != '' }}
         run: npx --yes netlify-cli@latest deploy --prod --dir=${{ env.SITE_DIR }} --auth="$NETLIFY_AUTH_TOKEN" --site="$NETLIFY_SITE_ID"

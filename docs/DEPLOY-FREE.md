@@ -21,18 +21,24 @@
 各平台 Job 通过 `if: ${{ env.XXX != '' }}` 控制：未配置对应 Secret 时自动跳过，不会报错，
 因此你可以先只配置一家，逐步开启。
 
-### 需要配置的 Secrets（仓库 Settings → Secrets and variables → Actions → New repository secret）
+### 需要配置的 Secrets（必须配在「Repository secrets」，不是 Environment secrets）
 
-| Secret 名 | 用途 | 获取位置 |
-|-----------|------|----------|
-| `CF_API_TOKEN` | Cloudflare API Token（需 Pages:Edit 权限） | dash.cloudflare.com → My Profile → API Tokens |
-| `CF_ACCOUNT_ID` | Cloudflare 账户 ID | 右侧账号首页 |
-| `CF_PROJECT_NAME` | Cloudflare Pages 项目名 | Pages 项目设置 |
-| `VERCEL_TOKEN` | Vercel 访问令牌 | vercel.com → Settings → Tokens |
-| `VERCEL_ORG_ID` | 团队 ID | `npx vercel teams ls` 或项目设置 |
-| `VERCEL_PROJECT_ID` | 项目 ID | Vercel 项目 Settings → General |
-| `NETLIFY_AUTH_TOKEN` | Netlify 个人访问令牌 | app.netlify.com → User settings → Applications |
-| `NETLIFY_SITE_ID` | Netlify Site ID | 站点 Settings → Site details |
+进入仓库 **Settings → Secrets and variables → Actions → Secrets 标签页 → New repository secret**，
+逐条添加下面 8 个（名称必须完全一致，区分大小写）：
+
+| Secret 名 | 值是什么 | 去哪拿（精确路径） |
+|-----------|----------|-------------------|
+| `CF_API_TOKEN` | Cloudflare API Token | dash.cloudflare.com → 右上头像 → **My Profile → API Tokens → Create Token** → 选模板 **"Cloudflare Pages:Edit"**（或自定义权限 Account/Zone 的 `Pages:Edit`）→ 复制 Token |
+| `CF_ACCOUNT_ID` | 账户 ID | dash.cloudflare.com 右侧栏 **"Account ID"**（首页右上，或 My Profile 页） |
+| `CF_PROJECT_NAME` | Pages 项目名 | 先在 dash.cloudflare.com → **Workers & Pages → Create → Pages → Connect to Git** 建好项目，项目名即此处填的值（如 `knowledge-front-yuying`） |
+| `VERCEL_TOKEN` | Vercel 访问令牌 | vercel.com → 右上头像 → **Settings → Tokens → Create** → 复制 Token |
+| `VERCEL_ORG_ID` | 团队 ID | vercel.com → 项目 **Settings → General** 页底部 **"Team ID"**；或个人账号在 `npx vercel teams ls` 输出 |
+| `VERCEL_PROJECT_ID` | 项目 ID | vercel.com → 项目 **Settings → General** 页底部 **"Project ID"**（先在 Vercel 导入该 GitHub 仓库建好项目） |
+| `NETLIFY_AUTH_TOKEN` | Netlify 个人访问令牌 | app.netlify.com → 右上头像 → **User settings → Applications → New access token** → 复制 |
+| `NETLIFY_SITE_ID` | 站点 ID | app.netlify.com 进入站点 → **Site settings → Site details → Site ID**（先 Import from Git 建好站点） |
+
+> ⚠️ 若 Secret 配在 **Environment secrets**（某个环境名下），工作流读不到，必须配在 **Repository secrets**。
+> 配错名字（如多写 CLOUDFLARE_ 前缀）会导致 step 报 `::error::缺少 ... Secret` 并失败，按提示核对名称即可。
 
 > 只需配置你想启用的平台对应的 Secret 即可，未配置的 Job 会自动跳过。
 
