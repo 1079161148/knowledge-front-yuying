@@ -91,6 +91,10 @@ jobs:
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$CLOUDFLARE_PROJECT_NAME" ]; then
             echo "::error::缺少 Cloudflare Secret，请在仓库 Settings → Secrets 配置 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_PROJECT_NAME"; exit 1
           fi
+      - name: Ensure Pages project exists
+        run: |
+          # 项目不存在则自动创建（已存在时 wrangler 会报错，忽略即可）
+          npx --yes wrangler@latest pages project create "$CLOUDFLARE_PROJECT_NAME" --production-branch=main || true
       - name: Deploy to Cloudflare Pages
         run: npx --yes wrangler@latest pages deploy ${{ env.SITE_DIR }} --project-name="$CLOUDFLARE_PROJECT_NAME" --commit-dirty=true
 
