@@ -123,6 +123,7 @@ jobs:
     env:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      NETLIFY_SITE_NAME: ${{ secrets.NETLIFY_SITE_NAME || 'knowledge-front-yuying' }}
     steps:
       - name: Download site
         uses: actions/download-artifact@v4
@@ -131,8 +132,22 @@ jobs:
           path: ${{ env.SITE_DIR }}
       - name: Check required secrets
         run: |
-          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
-            echo "::error::缺少 Netlify Secret，请在仓库 Settings → Secrets 配置 NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID"; exit 1
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "::error::缺少 Netlify Secret，请在仓库 Settings → Secrets 配置 NETLIFY_AUTH_TOKEN（个人访问令牌，无需预先建站点）"; exit 1
+          fi
+      - name: Ensure site exists
+        id: site
+        run: |
+          if [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "未配置 NETLIFY_SITE_ID，尝试自动创建站点（名称: $NETLIFY_SITE_NAME）..."
+            SITE=$(npx --yes netlify-cli@latest sites:create --disable-link --name "$NETLIFY_SITE_NAME" --auth="$NETLIFY_AUTH_TOKEN" 2>&1 | grep -iE "Site ID|Site Id" | head -n1 | awk '{print $NF}')
+            if [ -z "$SITE" ]; then
+              echo "::error::自动创建 Netlify 站点失败，请在 Netlify 后台手动建站并配置 NETLIFY_SITE_ID"; exit 1
+            fi
+            echo "site_id=$SITE" >> "$GITHUB_OUTPUT"
+            echo "已创建站点，ID=$SITE（建议将其保存为仓库 Secret NETLIFY_SITE_ID 以免重复建站）"
+          else
+            echo "site_id=$NETLIFY_SITE_ID" >> "$GITHUB_OUTPUT"
           fi
       - name: Deploy to Netlify
-        run: npx --yes netlify-cli@latest deploy --prod --dir=${{ env.SITE_DIR }} --auth="$NETLIFY_AUTH_TOKEN" --site="$NETLIFY_SITE_ID"
+        run: npx --yes netlify-cli@latest deploy --prod --dir=${{ env.SITE_DIR }} --auth="$NETLIFY_AUTH_TOKEN" --site="${{ steps.site.outputs.site_id }}"
