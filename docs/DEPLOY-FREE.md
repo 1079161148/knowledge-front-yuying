@@ -18,35 +18,41 @@
 - Vercel（vercel CLI）
 - Netlify（netlify-cli）
 
-各平台 Job 通过 `if: ${{ env.XXX != '' }}` 控制：未配置对应 Secret 时自动跳过，不会报错，
-因此你可以先只配置一家，逐步开启。
+各平台 Job 在部署前会执行 **Check required secrets** 步骤：若对应 Secret 缺失，会显式 `::error::`
+并 `exit 1` 使该 Job 失败（不会静默跳过），方便你从日志快速定位漏配项。因此请**一次配齐**想启用的
+平台所需的全部 Secret。
 
 ### 需要配置的 Secrets（必须配在「Repository secrets」，不是 Environment secrets）
 
 进入仓库 **Settings → Secrets and variables → Actions → Secrets 标签页 → New repository secret**，
-逐条添加下面 8 个（名称必须完全一致，区分大小写）：
+逐条添加下面这些（名称必须完全一致，区分大小写）。Cloudflare 使用官方 `CLOUDFLARE_*` 前缀：
 
 | Secret 名 | 值是什么 | 去哪拿（精确路径） |
 |-----------|----------|-------------------|
-| `CF_API_TOKEN` | Cloudflare API Token | dash.cloudflare.com → 右上头像 → **My Profile → API Tokens → Create Token** → 选模板 **"Cloudflare Pages:Edit"**（或自定义权限 Account/Zone 的 `Pages:Edit`）→ 复制 Token |
-| `CF_ACCOUNT_ID` | 账户 ID | dash.cloudflare.com 右侧栏 **"Account ID"**（首页右上，或 My Profile 页） |
-| `CF_PROJECT_NAME` | Pages 项目名 | 先在 dash.cloudflare.com → **Workers & Pages → Create → Pages → Connect to Git** 建好项目，项目名即此处填的值（如 `knowledge-front-yuying`） |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API Token | dash.cloudflare.com → 右上头像 → **My Profile → API Tokens → Create Token** → 选模板 **"Cloudflare Pages:Edit"**（或自定义权限 `Account:Cloudflare Pages:Edit`）→ 复制 Token |
+| `CLOUDFLARE_ACCOUNT_ID` | 账户 ID | dash.cloudflare.com 右侧栏 **"Account ID"**（首页右上，或 My Profile 页）；为 **32 位十六进制**，不要填账户名或邮箱 |
+| `CLOUDFLARE_PROJECT_NAME` | Pages 项目名 | 首次部署由 wrangler 自动创建，项目名即此处填的值（如 `knowledge-front-yuying`，合法字符即可，无需预先建站） |
 | `VERCEL_TOKEN` | Vercel 访问令牌 | vercel.com → 右上头像 → **Settings → Tokens → Create** → 复制 Token |
 | `VERCEL_ORG_ID` | 团队 ID | vercel.com → 项目 **Settings → General** 页底部 **"Team ID"**；或个人账号在 `npx vercel teams ls` 输出 |
 | `VERCEL_PROJECT_ID` | 项目 ID | vercel.com → 项目 **Settings → General** 页底部 **"Project ID"**（先在 Vercel 导入该 GitHub 仓库建好项目） |
 | `NETLIFY_AUTH_TOKEN` | Netlify 个人访问令牌 | app.netlify.com → 右上头像 → **User settings → Applications → New access token** → 复制 |
-| `NETLIFY_SITE_ID` | 站点 ID | app.netlify.com 进入站点 → **Site settings → Site details → Site ID**（先 Import from Git 建好站点） |
+| `NETLIFY_SITE_ID` | 站点 ID | app.netlify.com 进入站点 → **Site settings → Site details → Site ID**（需先在 Netlify 建好站点；工作流的自动建站在 CI 中易卡死，建议手动建站后填此 ID） |
 
 > ⚠️ 若 Secret 配在 **Environment secrets**（某个环境名下），工作流读不到，必须配在 **Repository secrets**。
-> 配错名字（如多写 CLOUDFLARE_ 前缀）会导致 step 报 `::error::缺少 ... Secret` 并失败，按提示核对名称即可。
-
-> 只需配置你想启用的平台对应的 Secret 即可，未配置的 Job 会自动跳过。
+> Cloudflare 系列**必须**使用 `CLOUDFLARE_` 前缀（`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` /
+> `CLOUDFLARE_PROJECT_NAME`），旧版 `CF_*` 已不再读取；配错名字会导致 step 报 `::error::缺少 ... Secret` 并失败。
 
 ---
 
 ## 方案 B：各平台后台直接连 GitHub 自动部署（备选/独立）
 
-若不想用 Actions 统一部署，也可在各平台后台连接本仓库，构建命令与上面一致。
+若不想用 Actions 统一部署，也可在各平台后台连接本仓库。
+
+> ⚠️ 方案 B 由各平台**云端自行构建**，云端默认没有 Python/mkdocs 环境，直接填 `mkdocs build`
+> 会报 `127 command not found`（正是此前踩过的坑）。若坚持用方案 B，需在各平台构建命令中先安装
+> Python 依赖，例如：
+> `pip install mkdocs-material pymdown-extensions && npm install && npm run vendor:sync && mkdocs build --strict`
+> 推荐优先使用方案 A（由 Actions 统一构建后上传产物，最省心）。
 
 ### 1. Cloudflare Pages（国内速度通常最快最稳）
 
